@@ -53,7 +53,13 @@
     "publish:patch": "npm version patch && npm publish",
     "prepack": "echo 'Alpha release - skipping build for now'",
     "postpack": "echo 'Package created successfully'",
-    "prepare-publish": "node scripts/prepare-publish.js"
+    "prepare-publish": "node scripts/prepare-publish.js",
+    "github-auto-fix": "node src/cli/commands/github-auto-fix.js",
+    "github-auto-fix:start": "node src/cli/commands/github-auto-fix.js start",
+    "github-auto-fix:status": "node src/cli/commands/github-auto-fix.js status",
+    "github-auto-fix:configure": "node src/cli/commands/github-auto-fix.js configure",
+    "github-auto-fix:test": "node tests/github-auto-fix-integration.test.js",
+    "github-auto-fix:deploy": "./scripts/deploy-github-auto-fix.sh"
   },
   "keywords": [
     "claude",

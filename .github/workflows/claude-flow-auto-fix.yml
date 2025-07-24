@@ -1,0 +1,289 @@
+name: Claude Flow Auto-Fix Integration
+on:
+  issues:
+    types: [opened, labeled, reopened]
+  issue_comment:
+    types: [created]
+  push:
+    branches: [main, develop]
+
+jobs:
+  auto-fix-trigger:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' || github.event_name == 'issue_comment'
+    steps:
+      - name: Check for auto-fix trigger
+        id: check-trigger
+        run: |
+          if [[ "${{ github.event_name }}" == "issues" ]]; then
+            LABELS=$(echo '${{ toJson(github.event.issue.labels) }}' | jq -r '.[].name' | tr '\n' ',' | sed 's/,$//')
+            echo "Issue labels: $LABELS"
+            
+            if echo "$LABELS" | grep -E "(bug|auto-fix|good first issue)" > /dev/null; then
+              echo "auto_fix=true" >> $GITHUB_OUTPUT
+            fi
+          elif [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            COMMENT="${{ github.event.comment.body }}"
+            if echo "$COMMENT" | grep -E "/(auto-fix|claude-fix)" > /dev/null; then
+              echo "auto_fix=true" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Trigger Claude Flow Auto-Fix
+        if: steps.check-trigger.outputs.auto_fix == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Send webhook to Claude Flow Auto-Fix system
+            const webhook_url = process.env.CLAUDE_FLOW_WEBHOOK_URL || 'http://your-autofix-server.com:3001/github-webhook';
+            
+            const payload = {
+              action: context.payload.action,
+              issue: context.payload.issue,
+              comment: context.payload.comment,
+              repository: context.payload.repository,
+              sender: context.payload.sender
+            };
+            
+            try {
+              const response = await fetch(webhook_url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-GitHub-Event': context.eventName,
+                  'X-Hub-Signature-256': 'sha256=' + require('crypto')
+                    .createHmac('sha256', process.env.GITHUB_WEBHOOK_SECRET || '')
+                    .update(JSON.stringify(payload))
+                    .digest('hex')
+                },
+                body: JSON.stringify(payload)
+              });
+              
+              if (response.ok) {
+                console.log('✅ Successfully triggered Claude Flow Auto-Fix');
+              } else {
+                console.log('❌ Failed to trigger auto-fix:', response.status);
+              }
+            } catch (error) {
+              console.log('❌ Error triggering auto-fix:', error.message);
+            }
+
+  code-analysis:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Get current and previous commit
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Claude Flow (if available)
+        run: |
+          # Try to install claude-flow if it's available
+          npm install -g claude-flow || echo "Claude Flow not available via npm"
+
+      - name: Analyze code changes for potential issues
+        id: analyze
+        run: |
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          echo "Changed files: $CHANGED_FILES"
+          
+          # Simple analysis for common issues
+          ISSUES_FOUND=""
+          
+          for file in $CHANGED_FILES; do
+            if [[ -f "$file" ]]; then
+              echo "Analyzing $file..."
+              
+              # Check for common issues
+              if grep -n "console.log\|debugger\|TODO\|FIXME\|XXX" "$file"; then
+                ISSUES_FOUND="$ISSUES_FOUND\n- Debug code or TODOs found in $file"
+              fi
+              
+              if grep -n "eval\|innerHTML\|document.write" "$file"; then
+                ISSUES_FOUND="$ISSUES_FOUND\n- Security concern in $file"
+              fi
+              
+              if [[ "$file" == *.js || "$file" == *.ts ]]; then
+                # Check for potential JavaScript issues
+                if grep -n "var " "$file"; then
+                  ISSUES_FOUND="$ISSUES_FOUND\n- Use let/const instead of var in $file"
+                fi
+              fi
+            fi
+          done
+          
+          if [[ -n "$ISSUES_FOUND" ]]; then
+            echo "POTENTIAL_ISSUES<<EOF" >> $GITHUB_ENV
+            echo -e "$ISSUES_FOUND" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+            echo "has_issues=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create issue for found problems
+        if: steps.analyze.outputs.has_issues == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = process.env.POTENTIAL_ISSUES;
+            const commit = context.sha.substring(0, 7);
+            
+            const issueBody = `## 🔍 Automated Code Analysis Report
+            
+            ### Commit: ${commit}
+            
+            The following potential issues were detected in recent changes:
+            
+            ${issues}
+            
+            ### Suggested Actions:
+            - Review the flagged code
+            - Consider running additional static analysis tools
+            - Add/update tests for modified functionality
+            - Ensure security best practices are followed
+            
+            ---
+            *This issue was automatically created by Claude Flow code analysis.*
+            *Add the label \`auto-fix\` if you want the AI system to attempt automatic resolution.*`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🤖 Code Analysis: Potential issues detected in ${commit}`,
+              body: issueBody,
+              labels: ['automated', 'code-quality', 'needs-review']
+            });
+
+  sparc-analysis:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'sparc-analysis')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Claude Flow environment
+        run: |
+          # Install dependencies
+          npm install -g claude-flow || echo "Installing from source..."
+          
+          # Setup memory namespace for analysis
+          claude-flow memory namespace github_analysis_${{ github.event.issue.number }}
+
+      - name: Run SPARC Analysis
+        run: |
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          ISSUE_BODY="${{ github.event.issue.body }}"
+          
+          # Run SPARC debug specialist mode
+          claude-flow sparc debug_specialist "Analyze GitHub issue: $ISSUE_TITLE. Description: $ISSUE_BODY" \
+            --memory-namespace github_analysis_${{ github.event.issue.number }} \
+            --output-format json > sparc_analysis.json
+          
+          # Run SPARC architecture review if it's a feature request
+          if echo "$ISSUE_TITLE $ISSUE_BODY" | grep -i "feature\|enhancement\|implement"; then
+            claude-flow sparc architecture_reviewer "Design solution for: $ISSUE_TITLE" \
+              --context "$ISSUE_BODY" \
+              --output-format json > sparc_architecture.json
+          fi
+
+      - name: Post SPARC Analysis Results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let analysisResult = '';
+            try {
+              if (fs.existsSync('sparc_analysis.json')) {
+                const analysis = JSON.parse(fs.readFileSync('sparc_analysis.json', 'utf8'));
+                analysisResult += `## 🧠 SPARC Debug Analysis\n\n${analysis.summary || 'Analysis completed'}\n\n`;
+              }
+              
+              if (fs.existsSync('sparc_architecture.json')) {
+                const architecture = JSON.parse(fs.readFileSync('sparc_architecture.json', 'utf8'));
+                analysisResult += `## 🏗️ SPARC Architecture Review\n\n${architecture.summary || 'Architecture review completed'}\n\n`;
+              }
+            } catch (error) {
+              analysisResult = `## ⚠️ SPARC Analysis Error\n\nFailed to parse analysis results: ${error.message}\n\n`;
+            }
+            
+            const comment = `${analysisResult}---\n*Generated by Claude Flow SPARC Analysis workflow*`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+  swarm-coordination:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'swarm-task')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize Swarm for Issue
+        run: |
+          # Install ruv-swarm if available
+          npm install -g ruv-swarm || echo "Ruv-swarm not available"
+          
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          
+          # Initialize swarm for this issue
+          npx ruv-swarm init --topology hierarchical --max-agents 5 --task-id "issue-$ISSUE_NUMBER"
+          
+          # Analyze issue and suggest agent roles
+          AGENTS="analyzer,debugger,tester"
+          if echo "$ISSUE_TITLE" | grep -i "feature\|implement"; then
+            AGENTS="$AGENTS,architect,coder"
+          fi
+          if echo "$ISSUE_TITLE" | grep -i "ui\|interface\|design"; then
+            AGENTS="$AGENTS,designer"
+          fi
+          
+          echo "Suggested agents: $AGENTS"
+          
+          # Create swarm coordination comment
+          SWARM_COMMENT="## 🐝 Swarm Coordination Initialized
+          
+          **Task ID**: issue-$ISSUE_NUMBER
+          **Topology**: Hierarchical
+          **Suggested Agents**: $AGENTS
+          
+          The swarm system has been initialized for this issue. Agents will coordinate to:
+          1. Analyze the problem
+          2. Design solution approach
+          3. Implement and test fixes
+          4. Review and validate results
+          
+          ---
+          *To interact with the swarm, use comments like:*
+          - \`/swarm analyze\` - Analyze the issue
+          - \`/swarm estimate\` - Estimate effort
+          - \`/swarm start\` - Begin implementation
+          - \`/swarm status\` - Check progress"
+          
+          # This would normally post via GitHub API
+          echo "$SWARM_COMMENT" > swarm_init_comment.md
+
+      - name: Post Swarm Initialization Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const comment = fs.readFileSync('swarm_init_comment.md', 'utf8');
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });

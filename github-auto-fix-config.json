@@ -1,0 +1,38 @@
+{
+  "enabled": true,
+  "repositories": [],
+  "autoFixLabels": [
+    "bug",
+    "auto-fix",
+    "good first issue"
+  ],
+  "ignoredLabels": [
+    "wontfix",
+    "duplicate",
+    "invalid"
+  ],
+  "maxConcurrentIssues": 3,
+  "webhookPort": 3001,
+  "sparc": {
+    "enabled": true,
+    "mode": "debug_specialist",
+    "memory_namespace": "github_autofix"
+  },
+  "swarm": {
+    "enabled": true,
+    "topology": "hierarchical",
+    "maxAgents": 5,
+    "roles": [
+      "analyzer",
+      "debugger",
+      "tester",
+      "fixer",
+      "reviewer"
+    ]
+  },
+  "notifications": {
+    "slack": null,
+    "email": null,
+    "github_comments": true
+  }
+}

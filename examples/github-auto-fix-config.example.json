@@ -1,0 +1,60 @@
+{
+  "enabled": true,
+  "repositories": [
+    "your-username/your-repo"
+  ],
+  "autoFixLabels": [
+    "bug",
+    "auto-fix",
+    "good first issue",
+    "easy fix"
+  ],
+  "ignoredLabels": [
+    "wontfix",
+    "duplicate",
+    "invalid",
+    "question",
+    "help wanted"
+  ],
+  "maxConcurrentIssues": 3,
+  "webhookPort": 3001,
+  "sparc": {
+    "enabled": true,
+    "mode": "debug_specialist",
+    "memory_namespace": "github_autofix"
+  },
+  "swarm": {
+    "enabled": true,
+    "topology": "hierarchical",
+    "maxAgents": 5,
+    "roles": [
+      "analyzer",
+      "debugger", 
+      "tester",
+      "fixer",
+      "reviewer"
+    ]
+  },
+  "notifications": {
+    "slack": null,
+    "email": null,
+    "github_comments": true
+  },
+  "security": {
+    "maxFileChanges": 10,
+    "requireReviewForSensitiveFiles": true,
+    "sensitiveFilePatterns": [
+      "**/*.key",
+      "**/*.pem",
+      "**/config/**",
+      "**/.env*",
+      "**/secrets/**"
+    ]
+  },
+  "analysis": {
+    "enableStaticAnalysis": true,
+    "enableSecurityScan": true,
+    "enablePerformanceCheck": true,
+    "timeout": 300000
+  }
+}

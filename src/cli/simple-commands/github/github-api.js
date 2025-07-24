@@ -4,7 +4,7 @@
  * Provides authentication, rate limiting, and API wrappers for GitHub workflow commands
  */
 
-import { printSuccess, printError, printWarning, printInfo } from '../utils.js';
+import { printSuccess, printError, printWarning, printInfo } from '../../utils.js';
 
 // GitHub API Configuration
 const GITHUB_API_BASE = 'https://api.github.com';
