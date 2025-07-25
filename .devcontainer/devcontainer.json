@@ -17,9 +17,12 @@
     }
   },
   "forwardPorts": [3000, 3001],
-  "postCreateCommand": "chmod +x .devcontainer/setup.sh && ./.devcontainer/setup.sh",
+  "postCreateCommand": "yes Y | npm install || (chmod +x .devcontainer/setup.sh && ./.devcontainer/setup.sh)",
   "remoteEnv": {
     "DEBIAN_FRONTEND": "noninteractive",
+    "CI": "true",
+    "DENO_INSTALL_AUTO": "1",
+    "SHELL_CONFIG_AUTO": "yes",
     "CLAUDE_FLOW_PORT": "3000",
     "NODE_ENV": "development"
   },

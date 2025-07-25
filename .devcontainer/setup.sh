@@ -14,33 +14,48 @@ export DEBIAN_FRONTEND=noninteractive
 install_with_confirmation() {
     echo "📦 Installing npm dependencies..."
     
-    # Try normal install first
-    if npm install 2>/dev/null; then
-        echo "✅ npm install completed successfully"
-        return 0
-    fi
+    # Force non-interactive mode and pipe Y responses directly
+    echo "🔄 Using aggressive confirmation for Deno installation..."
     
-    echo "🔄 npm install needs confirmation, providing automatic responses..."
-    
-    # If that fails, try with automatic yes responses
-    printf 'Y\nY\nY\n' | npm install || {
-        echo "⚠️  npm install with confirmations failed, trying with expect..."
+    # Multiple strategies to handle the Deno prompt
+    {
+        echo "Y"
+        echo "Y" 
+        echo "Y"
+        sleep 1
+        echo "Y"
+        echo "Y"
+    } | timeout 300 npm install || {
+        echo "⚠️  Timeout or failure, trying alternative approach..."
         
-        # Install expect if not available
-        if ! command -v expect &> /dev/null; then
-            sudo apt-get update -qq && sudo apt-get install -y expect
-        fi
+        # Alternative: Set environment variables to skip prompts
+        export DENO_INSTALL_AUTO=1
+        export CI=true
+        export DEBIAN_FRONTEND=noninteractive
         
-        # Use expect to handle interactive prompts
-        expect << 'EOF'
+        # Try with yes command for continuous Y responses
+        yes "Y" | timeout 300 npm install || {
+            echo "⚠️  Still failing, trying expect approach..."
+            
+            # Install expect if not available
+            if ! command -v expect &> /dev/null; then
+                sudo apt-get update -qq && sudo apt-get install -y expect
+            fi
+            
+            # Use expect to handle interactive prompts
+            timeout 300 expect << 'EOF' || echo "⚠️  Expect also failed, but continuing..."
 spawn npm install
 expect {
-    "*to allow editing shell configs*" { send "Y\r"; exp_continue }
+    "*allow editing shell configs*" { send "Y\r"; exp_continue }
     "*Do you want to continue*" { send "Y\r"; exp_continue }
     "*Proceed*" { send "Y\r"; exp_continue }
+    "*(y/n)*" { send "Y\r"; exp_continue }
+    "*(Y/n)*" { send "Y\r"; exp_continue }
+    timeout { send "Y\r"; exp_continue }
     eof
 }
 EOF
+        }
     }
 }
 
