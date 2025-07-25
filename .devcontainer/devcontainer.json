@@ -1,0 +1,31 @@
+{
+  "name": "Claude Flow Development",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:0-18",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-json",
+        "GitHub.copilot",
+        "GitHub.copilot-chat"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "forwardPorts": [3000, 3001],
+  "postCreateCommand": "npm install",
+  "remoteEnv": {
+    "CLAUDE_FLOW_PORT": "3000",
+    "NODE_ENV": "development"
+  },
+  "secrets": {
+    "GITHUB_TOKEN": {
+      "description": "GitHub Personal Access Token for Claude Flow GitHub integration",
+      "documentationUrl": "https://github.com/settings/tokens"
+    }
+  }
+}
