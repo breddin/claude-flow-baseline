@@ -39,12 +39,24 @@ When launching this project in GitHub Codespaces, you'll need to configure your 
 
 ## Starting the Development Environment
 
-Once your token is configured:
+### Step 1: Complete Setup
+
+**First, run the setup script to install dependencies:**
 
 ```bash
-# Install dependencies
-npm install
+# Run the setup script (handles Deno installation properly)
+./.devcontainer/setup.sh
+```
 
+**Important:** If prompted about Deno shell configuration, type `Y` and press Enter.
+
+### Step 2: Configure GitHub Token
+
+Once setup is complete, configure your token using one of the methods above.
+
+### Step 3: Initialize Environment
+
+```bash
 # Initialize SPARC environment
 npx claude-flow init --sparc
 

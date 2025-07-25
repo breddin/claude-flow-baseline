@@ -17,7 +17,7 @@
     }
   },
   "forwardPorts": [3000, 3001],
-  "postCreateCommand": "yes Y | npm install || (chmod +x .devcontainer/setup.sh && ./.devcontainer/setup.sh)",
+  "postCreateCommand": "chmod +x .devcontainer/setup.sh && chmod +x .devcontainer/welcome.sh && ./.devcontainer/welcome.sh",
   "remoteEnv": {
     "DEBIAN_FRONTEND": "noninteractive",
     "CI": "true",
