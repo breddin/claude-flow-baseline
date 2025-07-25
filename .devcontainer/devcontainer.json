@@ -17,8 +17,9 @@
     }
   },
   "forwardPorts": [3000, 3001],
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "chmod +x .devcontainer/setup.sh && ./.devcontainer/setup.sh",
   "remoteEnv": {
+    "DEBIAN_FRONTEND": "noninteractive",
     "CLAUDE_FLOW_PORT": "3000",
     "NODE_ENV": "development"
   },
