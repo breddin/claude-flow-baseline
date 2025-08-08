@@ -1,3 +1,28 @@
+# 🌊 Claude-Flow Baseline: Rolling Mirror Repository
+
+This is a **rolling mirror** of [ruvnet/claude-flow](https://github.com/ruvnet/claude-flow) maintained by @breddin.
+
+## 🎯 Purpose
+
+This repository serves as a **clean baseline** for tracking upstream changes from the main claude-flow project, with minimal modifications:
+
+- ✅ **Rolling Updates**: Automatically synced with ruvnet/claude-flow
+- ✅ **Minimal Patches**: Only essential compatibility fixes
+- ✅ **GitHub Token Support**: Handles $_GITHUB_PAT → $GITHUB_TOKEN mapping
+- ❌ **No Custom Features**: No additional functionality beyond upstream
+
+## 🔧 GitHub Token Configuration
+
+For cross-repository operations, source the token configuration:
+
+```bash
+source .env.github-token
+```
+
+This maps your `$_GITHUB_PAT` environment variable to `$GITHUB_TOKEN` for claude-flow operations.
+
+---
+
 # 🌊 Claude-Flow v2.0.0 Alpha: AI Orchestration Platform
 
 <div align="center">

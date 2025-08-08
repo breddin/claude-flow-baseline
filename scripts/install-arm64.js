@@ -72,6 +72,76 @@ async function main() {
       console.log('✅ SQLite bindings are working correctly');
     }
   }
+  
+  // Setup GitHub token mapping if needed
+  await setupGitHubTokenMapping();
+}
+
+// Setup GitHub token mapping for cross-repository operations
+async function setupGitHubTokenMapping() {
+  try {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const projectRoot = path.dirname(__dirname);
+    const tokenScriptPath = path.join(projectRoot, '.env.github-token');
+    
+    // Check if .env.github-token exists
+    if (fs.existsSync(tokenScriptPath)) {
+      console.log('🔑 GitHub token mapping script found - ready for $_GITHUB_PAT → $GITHUB_TOKEN');
+      
+      // Make sure it's executable
+      try {
+        fs.chmodSync(tokenScriptPath, 0o755);
+        console.log('✅ GitHub token script is executable');
+      } catch (chmodError) {
+        console.log('⚠️  Could not make GitHub token script executable:', chmodError.message);
+      }
+      
+      // Add to shell profiles if not already present
+      await addToShellProfiles(tokenScriptPath);
+    } else {
+      console.log('ℹ️  No GitHub token mapping script found (.env.github-token)');
+    }
+  } catch (error) {
+    console.log('⚠️  Error setting up GitHub token mapping:', error.message);
+  }
+}
+
+// Add sourcing to common shell profiles
+async function addToShellProfiles(tokenScriptPath) {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const os = await import('node:os');
+  
+  const homeDir = os.homedir();
+  const shellProfiles = [
+    path.join(homeDir, '.bashrc'),
+    path.join(homeDir, '.zshrc'),
+    path.join(homeDir, '.profile')
+  ];
+  
+  const sourceCommand = `# Claude Flow GitHub token mapping\nif [ -f "${tokenScriptPath}" ]; then\n  source "${tokenScriptPath}"\nfi\n`;
+  
+  for (const profile of shellProfiles) {
+    try {
+      if (fs.existsSync(profile)) {
+        const content = fs.readFileSync(profile, 'utf8');
+        
+        // Check if already added
+        if (!content.includes('Claude Flow GitHub token mapping')) {
+          fs.appendFileSync(profile, '\n' + sourceCommand);
+          console.log(`✅ Added GitHub token sourcing to ${path.basename(profile)}`);
+        } else {
+          console.log(`ℹ️  GitHub token sourcing already present in ${path.basename(profile)}`);
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️  Could not modify ${path.basename(profile)}:`, error.message);
+    }
+  }
 }
 
 // Run the installation enhancement
