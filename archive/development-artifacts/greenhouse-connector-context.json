@@ -1,0 +1,45 @@
+{
+  "greenhouse-api-docs": "https://developers.greenhouse.io/harvest.html",
+  "greenhouse-job-board": "https://developers.greenhouse.io/job-board.html", 
+  "greenhouse-webhooks": "https://developers.greenhouse.io/webhooks.html",
+  "greenhouse-onboarding": "https://developers.greenhouse.io/gho.html",
+  "greenhouse-ingestion": "https://developers.greenhouse.io/candidate-ingestion.html",
+  "greenhouse-assessment": "https://developers.greenhouse.io/assessment.html",
+  "greenhouse-audit-log": "https://developers.greenhouse.io/audit-log.html",
+  "paylocity-connector-repo": "breddin/sensux-paylocity-connector",
+  "project-context": "greenhouse-connector-ballerina",
+  "development-methodology": "sparc",
+  "target-language": "ballerina",
+  "development-priority": "critical",
+  "api-categories": "7",
+  "endpoint-count": "200+",
+  "authentication-method": "Basic Auth with API tokens",
+  "rate-limiting": "50 requests per 10 seconds",
+  "security-requirements": "HTTPS only, configurable API permissions",
+  "agent-context": {
+    "api-analysis-agent": "Complete analysis of all 7 Greenhouse API categories",
+    "architecture-agent": "Design Ballerina connector following breddin/sensux-paylocity-connector patterns",
+    "data-modeling-agent": "Create comprehensive Ballerina record types for all entities",
+    "http-client-agent": "Implement authenticated HTTP client with rate limiting",
+    "api-integration-agent": "Implement all 200+ endpoints across 7 categories",
+    "testing-agent": "Comprehensive test coverage with mock Greenhouse API",
+    "documentation-agent": "Complete API reference and integration guides",
+    "configuration-agent": "Secure configuration and deployment setup"
+  },
+  "development-phases": {
+    "specification": "8 hours - API analysis and requirements gathering",
+    "planning": "8 hours - Implementation roadmap and design",
+    "architecture": "16 hours - Core infrastructure implementation", 
+    "realization": "16 hours - Primary API implementation",
+    "completion": "8 hours - Final integration and validation"
+  },
+  "technical-requirements": {
+    "complete-api-coverage": "All 7 Greenhouse API categories",
+    "robust-authentication": "Basic Auth with configurable API tokens",
+    "rate-limiting": "Built-in rate limiting (50 req/10sec default)",
+    "error-handling": "Comprehensive error handling with retry logic",
+    "pagination-support": "All Greenhouse pagination patterns",
+    "webhook-management": "Subscription management and event handling",
+    "ballerina-integration": "Record types, HTTP client, JSON handling"
+  }
+}
