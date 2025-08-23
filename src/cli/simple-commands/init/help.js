@@ -22,6 +22,11 @@ export function showInitHelp() {
   console.log('  --skip-mcp           Skip automatic MCP server setup in Claude Code');
   console.log('  --monitoring         Enable token usage tracking and telemetry setup');
   console.log();
+  console.log('Verification & Pair Programming:');
+  console.log('  --verify             Initialize with Truth Verification System enabled');
+  console.log('  --pair               Initialize with Pair Programming mode enabled');
+  console.log('                       (These options create verification-focused CLAUDE.md)');
+  console.log();
   console.log('Advanced Options:');
   console.log('  --enhanced, --safe   Enhanced initialization with validation and rollback');
   console.log('  --validate           Run validation checks only');
@@ -54,6 +59,12 @@ export function showInitHelp() {
   console.log('  claude-flow init --sparc --modes architect,tdd,code  # Selective initialization');
   console.log('  claude-flow init --dry-run --sparc          # Preview initialization');
   console.log('  claude-flow init --minimal                  # Minimal setup');
+  console.log();
+  console.log('🔍 VERIFICATION & PAIR PROGRAMMING:');
+  console.log('  claude-flow init --verify                   # Truth Verification System setup');
+  console.log('  claude-flow init --pair                     # Pair Programming mode setup');
+  console.log('  claude-flow init --verify --pair            # Both verification and pairing');
+  console.log('  npx claude-flow@alpha init --verify --pair  # Complete verification setup');
   console.log();
   console.log('🔄 VALIDATION & ROLLBACK:');
   console.log('  claude-flow init --validate                 # Validate existing setup');

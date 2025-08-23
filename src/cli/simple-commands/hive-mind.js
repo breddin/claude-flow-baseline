@@ -2005,10 +2005,18 @@ async function spawnClaudeCodeInstances(swarmId, swarmName, objective, workers, 
         // Respect --non-interactive flag regardless of --claude
         const isNonInteractive = flags['non-interactive'] || flags.nonInteractive;
         
-        // Pass the prompt directly as an argument to claude
-        const claudeArgs = [hiveMindPrompt];
+        // Build arguments in correct order: flags first, then prompt
+        const claudeArgs = [];
+        
+        // Add non-interactive flags FIRST if needed
+        if (isNonInteractive) {
+          claudeArgs.push('-p'); // Print mode
+          claudeArgs.push('--output-format', 'stream-json'); // JSON streaming  
+          claudeArgs.push('--verbose'); // Verbose output
+          console.log(chalk.cyan('🤖 Running in non-interactive mode'));
+        }
 
-        // Add auto-permission flag by default for hive-mind mode (unless explicitly disabled)
+        // Add auto-permission flag BEFORE the prompt
         if (flags['dangerously-skip-permissions'] !== false && !flags['no-auto-permissions']) {
           claudeArgs.push('--dangerously-skip-permissions');
           if (!isNonInteractive) {
@@ -2020,15 +2028,10 @@ async function spawnClaudeCodeInstances(swarmId, swarmName, objective, workers, 
           }
         }
         
-        // Add non-interactive flags if needed
-        if (isNonInteractive) {
-          claudeArgs.push('-p'); // Print mode
-          claudeArgs.push('--output-format', 'stream-json'); // JSON streaming  
-          claudeArgs.push('--verbose'); // Verbose output
-          console.log(chalk.cyan('🤖 Running in non-interactive mode'));
-        }
+        // Add the prompt as the LAST argument
+        claudeArgs.push(hiveMindPrompt);
 
-        // Spawn claude with the prompt as the first argument
+        // Spawn claude with properly ordered arguments
         const claudeProcess = childSpawn('claude', claudeArgs, {
           stdio: 'inherit',
           shell: false,

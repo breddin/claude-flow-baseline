@@ -1,0 +1,15 @@
+{
+  "scope": "system",
+  "target": "all",
+  "bottlenecks": [
+    {
+      "severity": "good",
+      "component": "Overall system",
+      "metric": "No bottlenecks detected"
+    }
+  ],
+  "recommendations": [],
+  "analysisDuration": 263.92715,
+  "confidenceScore": 0.85,
+  "issuesDetected": 0
+}

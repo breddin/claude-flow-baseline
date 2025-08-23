@@ -1,0 +1,15 @@
+{
+  "scope": "agent",
+  "target": "coordinator-1",
+  "bottlenecks": [
+    {
+      "severity": "good",
+      "component": "Overall system",
+      "metric": "No bottlenecks detected"
+    }
+  ],
+  "recommendations": [],
+  "analysisDuration": 244.618492,
+  "confidenceScore": 0.85,
+  "issuesDetected": 0
+}

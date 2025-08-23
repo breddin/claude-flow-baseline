@@ -11,6 +11,20 @@ import { execAsync } from '../utils/helpers.js';
 import { existsSync } from 'fs';
 import { join } from 'path';
 
+// Import error fixes for agent_metrics, swarm_monitor, neural_train
+let errorFixes: any;
+try {
+  errorFixes = require('./fixes/mcp-error-fixes.js');
+} catch (e) {
+  // Fallback if module not found
+  errorFixes = {
+    fixAgentMetrics: (d: any) => d,
+    fixSwarmMonitor: (d: any) => d,
+    fixNeuralTrain: (d: any) => d,
+    wrapRuvSwarmResponse: (n: string, d: any) => d,
+  };
+}
+
 export interface RuvSwarmToolContext extends MCPContext {
   workingDirectory?: string;
   swarmId?: string;
@@ -185,7 +199,9 @@ export function createRuvSwarmTools(logger: ILogger): MCPTool[] {
           String(input.interval || 1),
         ];
 
-        return await executeRuvSwarmCommand('swarm monitor', args, context, logger);
+        const result = await executeRuvSwarmCommand('swarm monitor', args, context, logger);
+        // Apply fix to ensure recentEvents is an array
+        return errorFixes.fixSwarmMonitor(result);
       },
     },
 
@@ -284,7 +300,9 @@ export function createRuvSwarmTools(logger: ILogger): MCPTool[] {
           args.push('--agent-id', input.agentId);
         }
 
-        return await executeRuvSwarmCommand('agent metrics', args, context, logger);
+        const result = await executeRuvSwarmCommand('agent metrics', args, context, logger);
+        // Apply fix to ensure neuralNetworks is an array
+        return errorFixes.fixAgentMetrics(result);
       },
     },
 
@@ -461,10 +479,12 @@ export function createRuvSwarmTools(logger: ILogger): MCPTool[] {
         },
       },
       handler: async (input: any, context?: RuvSwarmToolContext) => {
-        const args = ['--iterations', String(input.iterations || 10)];
+        // Apply fix to ensure agentId is valid
+        const fixedInput = errorFixes.fixNeuralTrain(input);
+        const args = ['--iterations', String(fixedInput.iterations || 10)];
 
-        if (input.agentId) {
-          args.push('--agent-id', input.agentId);
+        if (fixedInput.agentId) {
+          args.push('--agent-id', fixedInput.agentId);
         }
 
         return await executeRuvSwarmCommand('neural train', args, context, logger);

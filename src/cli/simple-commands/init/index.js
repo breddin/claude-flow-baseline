@@ -63,6 +63,10 @@ import {
   createMinimalClaudeMd,
 } from './templates/claude-md.js';
 import {
+  createVerificationClaudeMd,
+  createVerificationSettingsJson,
+} from './templates/verification-claude-md.js';
+import {
   createFullMemoryBankMd,
   createMinimalMemoryBankMd,
 } from './templates/memory-bank-md.js';
@@ -71,6 +75,11 @@ import {
   createMinimalCoordinationMd,
 } from './templates/coordination-md.js';
 import { createAgentsReadme, createSessionsReadme } from './templates/readme-files.js';
+import { 
+  initializeHiveMind, 
+  getHiveMindStatus,
+  rollbackHiveMindInit
+} from './hive-mind-init.js';
 
 /**
  * Check if Claude Code CLI is installed
@@ -137,9 +146,13 @@ export async function initCommand(subArgs, flags) {
     return;
   }
 
-  // Default to enhanced Claude Flow v2 init
-  // Use --basic flag for old behavior
-  if (!flags.basic && !flags.minimal && !flags.sparc) {
+  // Check for verification flags first
+  const hasVerificationFlags = subArgs.includes('--verify') || subArgs.includes('--pair') || 
+                               flags.verify || flags.pair;
+  
+  // Default to enhanced Claude Flow v2 init unless other modes are specified
+  // Use --basic flag for old behavior, or verification flags for verification mode
+  if (!flags.basic && !flags.minimal && !flags.sparc && !hasVerificationFlags) {
     return await enhancedClaudeFlowInit(flags, subArgs);
   }
 
@@ -178,6 +191,10 @@ export async function initCommand(subArgs, flags) {
   const initDryRun = subArgs.includes('--dry-run') || subArgs.includes('-d') || flags.dryRun;
   const initOptimized = initSparc && initForce; // Use optimized templates when both flags are present
   const selectedModes = flags.modes ? flags.modes.split(',') : null; // Support selective mode initialization
+  
+  // Check for verification and pair programming flags
+  const initVerify = subArgs.includes('--verify') || flags.verify;
+  const initPair = subArgs.includes('--pair') || flags.pair;
 
   // Get the actual working directory (where the command was run from)
   // Use PWD environment variable which preserves the original directory
@@ -221,37 +238,76 @@ export async function initCommand(subArgs, flags) {
       dryRun: initDryRun,
       force: initForce,
       selectedModes: selectedModes,
+      verify: initVerify,
+      pair: initPair,
     };
 
-    // First try to copy revised templates from repository
-    const validation = validateTemplatesExist();
-    if (validation.valid) {
-      console.log('  📁 Copying revised template files...');
-      const revisedResults = await copyRevisedTemplates(workingDir, {
-        force: initForce,
-        dryRun: initDryRun,
-        verbose: true,
-        sparc: initSparc
+    // If verification flags are set, always use generated templates for CLAUDE.md and settings.json
+    if (initVerify || initPair) {
+      console.log('  📁 Creating verification-focused configuration...');
+      
+      // Create verification CLAUDE.md
+      if (!initDryRun) {
+        const { createVerificationClaudeMd, createVerificationSettingsJson } = await import('./templates/verification-claude-md.js');
+        await fs.writeFile(`${workingDir}/CLAUDE.md`, createVerificationClaudeMd(), 'utf8');
+        
+        // Create .claude directory and settings
+        await fs.mkdir(`${workingDir}/.claude`, { recursive: true });
+        await fs.writeFile(`${workingDir}/.claude/settings.json`, createVerificationSettingsJson(), 'utf8');
+        console.log('  ✅ Created verification-focused CLAUDE.md and settings.json');
+      } else {
+        console.log('  [DRY RUN] Would create verification-focused CLAUDE.md and settings.json');
+      }
+      
+      // Copy other template files from repository if available
+      const validation = validateTemplatesExist();
+      if (validation.valid) {
+        const revisedResults = await copyRevisedTemplates(workingDir, {
+          force: initForce,
+          dryRun: initDryRun,
+          verbose: false,
+          sparc: initSparc
+        });
+      }
+      
+      // Also create standard memory and coordination files
+      const copyResults = await copyTemplates(workingDir, {
+        ...templateOptions,
+        skipClaudeMd: true,  // Don't overwrite the verification CLAUDE.md
+        skipSettings: true   // Don't overwrite the verification settings.json
       });
+      
+    } else {
+      // Standard template copying logic
+      const validation = validateTemplatesExist();
+      if (validation.valid) {
+        console.log('  📁 Copying revised template files...');
+        const revisedResults = await copyRevisedTemplates(workingDir, {
+          force: initForce,
+          dryRun: initDryRun,
+          verbose: true,
+          sparc: initSparc
+        });
 
-      if (revisedResults.success) {
-        console.log(`  ✅ Copied ${revisedResults.copiedFiles.length} template files`);
-        if (revisedResults.skippedFiles.length > 0) {
-          console.log(`  ⏭️  Skipped ${revisedResults.skippedFiles.length} existing files`);
+        if (revisedResults.success) {
+          console.log(`  ✅ Copied ${revisedResults.copiedFiles.length} template files`);
+          if (revisedResults.skippedFiles.length > 0) {
+            console.log(`  ⏭️  Skipped ${revisedResults.skippedFiles.length} existing files`);
+          }
+        } else {
+          console.log('  ⚠️  Some template files could not be copied:');
+          revisedResults.errors.forEach(err => console.log(`    - ${err}`));
         }
       } else {
-        console.log('  ⚠️  Some template files could not be copied:');
-        revisedResults.errors.forEach(err => console.log(`    - ${err}`));
-      }
-    } else {
-      // Fall back to generated templates
-      console.log('  ⚠️  Revised templates not available, using generated templates');
-      const copyResults = await copyTemplates(workingDir, templateOptions);
+        // Fall back to generated templates
+        console.log('  ⚠️  Revised templates not available, using generated templates');
+        const copyResults = await copyTemplates(workingDir, templateOptions);
 
-      if (!copyResults.success) {
-        printError('Failed to copy templates:');
-        copyResults.errors.forEach(err => console.log(`  ❌ ${err}`));
-        return;
+        if (!copyResults.success) {
+          printError('Failed to copy templates:');
+          copyResults.errors.forEach(err => console.log(`  ❌ ${err}`));
+          return;
+        }
       }
     }
 
@@ -430,6 +486,31 @@ export async function initCommand(subArgs, flags) {
         console.log('  • Use --parallel flags for concurrent operations');
         console.log('  • Enable batch processing for multiple related tasks');
         console.log('  • Monitor performance with real-time metrics');
+      }
+
+      // Initialize hive-mind system for standard init
+      console.log('\n🧠 Initializing basic hive-mind system...');
+      try {
+        const hiveMindOptions = {
+          config: {
+            integration: {
+              claudeCode: { enabled: isClaudeCodeInstalled() },
+              mcpTools: { enabled: true }
+            },
+            monitoring: { enabled: false } // Basic setup for standard init
+          }
+        };
+        
+        const hiveMindResult = await initializeHiveMind(workingDir, hiveMindOptions, false);
+        
+        if (hiveMindResult.success) {
+          console.log('  ✅ Basic hive-mind system initialized');
+          console.log('  💡 Use "npx claude-flow@alpha hive-mind" for advanced features');
+        } else {
+          console.log(`  ⚠️  Hive-mind setup skipped: ${hiveMindResult.error}`);
+        }
+      } catch (err) {
+        console.log(`  ⚠️  Hive-mind setup skipped: ${err.message}`);
       }
 
       // Check for Claude Code and set up MCP servers (always enabled by default)
@@ -1271,80 +1352,34 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
         console.log('     Memory will be initialized on first use');
       }
 
-      // Initialize hive-mind configuration
+      // Initialize comprehensive hive-mind system
+      console.log('\n🧠 Initializing Hive Mind System...');
       try {
-        const hiveMindConfig = {
-          version: '2.0.0',
-          initialized: new Date().toISOString(),
-          defaults: {
-            queenType: 'strategic',
-            maxWorkers: 8,
-            consensusAlgorithm: 'majority',
-            memorySize: 100,
-            autoScale: true,
-            encryption: false,
-          },
-          mcpTools: {
-            enabled: true,
-            parallel: true,
-            timeout: 60000,
-          },
+        const hiveMindOptions = {
+          config: {
+            integration: {
+              claudeCode: { enabled: isClaudeCodeInstalled() },
+              mcpTools: { enabled: true }
+            },
+            monitoring: { enabled: flags.monitoring || false }
+          }
         };
-
-        await fs.writeFile(
-          `${workingDir}/.hive-mind/config.json`, JSON.stringify(hiveMindConfig, null, 2, 'utf8'),
-        );
         
-        // Initialize hive.db
-        try {
-          const Database = (await import('better-sqlite3')).default;
-          const hivePath = `${workingDir}/.hive-mind/hive.db`;
-          const hiveDb = new Database(hivePath);
+        const hiveMindResult = await initializeHiveMind(workingDir, hiveMindOptions, dryRun);
+        
+        if (hiveMindResult.success) {
+          printSuccess(`✓ Hive Mind System initialized with ${hiveMindResult.features.length} features`);
           
-          // Create initial tables
-          hiveDb.exec(`
-            CREATE TABLE IF NOT EXISTS swarms (
-              id TEXT PRIMARY KEY,
-              name TEXT NOT NULL,
-              objective TEXT,
-              status TEXT DEFAULT 'active',
-              queen_type TEXT DEFAULT 'strategic',
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-            
-            CREATE TABLE IF NOT EXISTS agents (
-              id TEXT PRIMARY KEY,
-              swarm_id TEXT,
-              name TEXT NOT NULL,
-              type TEXT NOT NULL,
-              role TEXT,
-              capabilities TEXT,
-              status TEXT DEFAULT 'active',
-              performance_score REAL DEFAULT 0.5,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              FOREIGN KEY (swarm_id) REFERENCES swarms (id)
-            );
-            
-            CREATE TABLE IF NOT EXISTS messages (
-              id TEXT PRIMARY KEY,
-              swarm_id TEXT,
-              agent_id TEXT,
-              content TEXT NOT NULL,
-              type TEXT DEFAULT 'task',
-              timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-              FOREIGN KEY (swarm_id) REFERENCES swarms (id),
-              FOREIGN KEY (agent_id) REFERENCES agents (id)
-            );
-          `);
-          
-          hiveDb.close();
-          printSuccess('✓ Initialized hive-mind database (.hive-mind/hive.db)');
-        } catch (dbErr) {
-          console.log(`  ⚠️  Could not initialize hive-mind database: ${dbErr.message}`);
+          // Log individual features
+          hiveMindResult.features.forEach(feature => {
+            console.log(`    • ${feature}`);
+          });
+        } else {
+          console.log(`  ⚠️  Hive Mind initialization failed: ${hiveMindResult.error}`);
+          if (hiveMindResult.rollbackRequired) {
+            console.log('  🔄 Automatic rollback may be required');
+          }
         }
-        
-        printSuccess('✓ Initialized hive-mind system');
       } catch (err) {
         console.log(`  ⚠️  Could not initialize hive-mind system: ${err.message}`);
       }
@@ -1437,20 +1472,34 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
       await setupMonitoring(workingDir);
     }
     
-    // Final instructions
+    // Final instructions with hive-mind status
     console.log('\n🎉 Claude Flow v2.0.0 initialization complete!');
+    
+    // Display hive-mind status
+    const hiveMindStatus = getHiveMindStatus(workingDir);
+    console.log('\n🧠 Hive Mind System Status:');
+    console.log(`  Configuration: ${hiveMindStatus.configured ? '✅ Ready' : '❌ Missing'}`);
+    console.log(`  Database: ${hiveMindStatus.database === 'sqlite' ? '✅ SQLite' : hiveMindStatus.database === 'fallback' ? '⚠️ JSON Fallback' : '❌ Not initialized'}`);
+    console.log(`  Directory Structure: ${hiveMindStatus.directories ? '✅ Created' : '❌ Missing'}`);
+    
     console.log('\n📚 Quick Start:');
     if (isClaudeCodeInstalled()) {
       console.log('1. View available commands: ls .claude/commands/');
       console.log('2. Start a swarm: npx claude-flow@alpha swarm "your objective" --claude');
       console.log('3. Use hive-mind: npx claude-flow@alpha hive-mind spawn "command" --claude');
       console.log('4. Use MCP tools in Claude Code for enhanced coordination');
+      if (hiveMindStatus.configured) {
+        console.log('5. Initialize first swarm: npx claude-flow@alpha hive-mind init');
+      }
     } else {
       console.log('1. Install Claude Code: npm install -g @anthropic-ai/claude-code');
       console.log('2. Add MCP servers (see instructions above)');
       console.log('3. View available commands: ls .claude/commands/');
       console.log('4. Start a swarm: npx claude-flow@alpha swarm "your objective" --claude');
       console.log('5. Use hive-mind: npx claude-flow@alpha hive-mind spawn "command" --claude');
+      if (hiveMindStatus.configured) {
+        console.log('6. Initialize first swarm: npx claude-flow@alpha hive-mind init');
+      }
     }
     console.log('\n💡 Tips:');
     console.log('• Check .claude/commands/ for detailed documentation');
@@ -1461,5 +1510,21 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
     console.log('• Use .claude/helpers/checkpoint-manager.sh for easy rollback');
   } catch (err) {
     printError(`Failed to initialize Claude Flow v2.0.0: ${err.message}`);
+    
+    // Attempt hive-mind rollback if it was partially initialized
+    try {
+      const hiveMindStatus = getHiveMindStatus(workingDir);
+      if (hiveMindStatus.directories || hiveMindStatus.configured) {
+        console.log('\n🔄 Attempting hive-mind system rollback...');
+        const rollbackResult = await rollbackHiveMindInit(workingDir);
+        if (rollbackResult.success) {
+          console.log('  ✅ Hive-mind rollback completed');
+        } else {
+          console.log(`  ⚠️  Hive-mind rollback failed: ${rollbackResult.error}`);
+        }
+      }
+    } catch (rollbackErr) {
+      console.log(`  ⚠️  Rollback error: ${rollbackErr.message}`);
+    }
   }
 }

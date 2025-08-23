@@ -32,7 +32,8 @@ export async function copyTemplates(targetDir, options = {}) {
     const templatesDir = join(__dirname, 'templates');
     
     // Determine which template variants to use
-    const templateVariant = options.optimized ? 'optimized' : 
+    const templateVariant = (options.verify || options.pair) ? 'verification' :
+                          options.optimized ? 'optimized' : 
                           options.enhanced ? 'enhanced' :
                           options.minimal ? 'minimal' : 
                           options.sparc ? 'sparc' : 'full';
@@ -58,6 +59,10 @@ export async function copyTemplates(targetDir, options = {}) {
 
     // Copy core files
     for (const file of coreFiles) {
+      // Skip files if requested
+      if (options.skipClaudeMd && file.destination === 'CLAUDE.md') continue;
+      if (options.skipSettings && file.destination.includes('settings')) continue;
+      
       const sourceFile = file.useVariant && existsSync(join(templatesDir, `${file.source}.${templateVariant}`)) 
         ? `${file.source}.${templateVariant}`
         : file.source;
@@ -76,17 +81,23 @@ export async function copyTemplates(targetDir, options = {}) {
     if (options.enhanced || !options.minimal) {
       const claudeDir = join(targetDir, '.claude');
       
-      // Copy settings.json
-      const settingsSource = options.enhanced ? 'settings.json.enhanced' : 'settings.json';
-      const settingsPath = join(templatesDir, settingsSource);
-      const settingsDest = join(claudeDir, 'settings.json');
-      
-      if (!options.dryRun) {
+      // Copy settings.json unless skipped
+      if (!options.skipSettings) {
+        const settingsSource = (options.verify || options.pair) ? 'settings.json.verification' :
+                               options.enhanced ? 'settings.json.enhanced' : 'settings.json';
+        const settingsPath = join(templatesDir, settingsSource);
+        const settingsDest = join(claudeDir, 'settings.json');
+        
+        if (!options.dryRun) {
+          await fs.mkdir(claudeDir, { recursive: true });
+        }
+        
+        if (await copyFile(settingsPath, settingsDest, options)) {
+          results.copiedFiles.push('.claude/settings.json');
+        }
+      } else if (!options.dryRun) {
+        // Still create the directory even if skipping settings
         await fs.mkdir(claudeDir, { recursive: true });
-      }
-      
-      if (await copyFile(settingsPath, settingsDest, options)) {
-        results.copiedFiles.push('.claude/settings.json');
       }
 
       // Copy command templates
@@ -482,6 +493,10 @@ async function getTemplateContent(templatePath) {
       const { createEnhancedClaudeMd } = await import('./templates/enhanced-templates.js');
       return createEnhancedClaudeMd();
     },
+    'CLAUDE.md.verification': async () => {
+      const { createVerificationClaudeMd } = await import('./templates/verification-claude-md.js');
+      return createVerificationClaudeMd();
+    },
     'memory-bank.md': async () => {
       const { createFullMemoryBankMd } = await import('./templates/memory-bank-md.js');
       return createFullMemoryBankMd();
@@ -512,6 +527,10 @@ async function getTemplateContent(templatePath) {
     'settings.json.enhanced': async () => {
       const { createEnhancedSettingsJson } = await import('./templates/enhanced-templates.js');
       return createEnhancedSettingsJson();
+    },
+    'settings.json.verification': async () => {
+      const { createVerificationSettingsJson } = await import('./templates/verification-claude-md.js');
+      return createVerificationSettingsJson();
     },
     'claude-flow-universal': async () => {
       return await fs.readFile(join(__dirname, 'templates', 'claude-flow-universal'), 'utf8');
