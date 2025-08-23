@@ -6,7 +6,7 @@
 set -e
 
 # Configuration - Baseline Repository Specific
-UPSTREAM_REPO="https://github.com/ruvnet/claude-code-flow.git"
+UPSTREAM_REPO="https://github.com/ruvnet/claude-flow.git"
 
 # Colors for output
 RED='\033[0;31m'
@@ -36,7 +36,7 @@ warning() {
 setup_remotes() {
     log "Setting up remotes for baseline repository..."
     
-    # Baseline only needs upstream (ruvnet/claude-code-flow)
+    # Baseline only needs upstream (ruvnet/claude-flow)
     git remote add upstream "$UPSTREAM_REPO" 2>/dev/null || \
         git remote set-url upstream "$UPSTREAM_REPO"
     
@@ -44,9 +44,9 @@ setup_remotes() {
     git remote -v
 }
 
-# Sync baseline from upstream (ruvnet/claude-code-flow)
+# Sync baseline from upstream (ruvnet/claude-flow)
 sync_baseline() {
-    log "Syncing baseline repository from ruvnet/claude-code-flow..."
+    log "Syncing baseline repository from ruvnet/claude-flow..."
     
     # This is the critical sync for the entire ecosystem
     log "⚠️  CRITICAL: This sync affects ALL downstream repositories"
@@ -94,8 +94,8 @@ sync_baseline() {
         if command -v gh &> /dev/null; then
             log "Creating pull request..."
             gh pr create \
-                --title "🔄 Sync from upstream ruvnet/claude-code-flow $(date +%Y-%m-%d)" \
-                --body "Automated sync from ruvnet/claude-code-flow
+                --title "🔄 Sync from upstream ruvnet/claude-flow $(date +%Y-%m-%d)" \
+                --body "Automated sync from ruvnet/claude-flow
 
 **Commits synced:** $commit_count
 **Sync type:** Baseline (clean mirror)
@@ -241,13 +241,13 @@ show_help() {
 Claude Flow Baseline Repository Sync Manager
 
 This is the specialized version for the baseline repository (claude-flow-baseline).
-The baseline repository serves as a clean mirror of ruvnet/claude-code-flow.
+The baseline repository serves as a clean mirror of ruvnet/claude-flow.
 
 Usage: $0 [COMMAND]
 
 Commands:
-    setup-remotes           Setup upstream remote (ruvnet/claude-code-flow)
-    sync-baseline          Sync from ruvnet/claude-code-flow 
+    setup-remotes           Setup upstream remote (ruvnet/claude-flow)
+    sync-baseline          Sync from ruvnet/claude-flow 
     check-health           Check repository health and configuration
     check-sync-status      Check sync status across entire chain
     help                   Show this help message
@@ -258,7 +258,7 @@ Examples:
     $0 check-health
 
 Important Notes:
-- This repository is a PURE MIRROR of ruvnet/claude-code-flow
+- This repository is a PURE MIRROR of ruvnet/claude-flow
 - No custom features should be added here
 - All downstream repositories depend on this repository
 - Sync carefully as changes affect the entire ecosystem
