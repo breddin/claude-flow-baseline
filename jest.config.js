@@ -13,6 +13,12 @@ export default {
     '<rootDir>/src/**/*.spec.ts',
     '<rootDir>/src/**/*.spec.js'
   ],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/dist/',
+    '<rootDir>/bin/',
+    '<rootDir>/tests/.*\\.broken$'
+  ],
   transform: {
     '^.+\\.ts$': ['ts-jest', {
       useESM: true,

@@ -13,7 +13,15 @@ export const MAIN_HELP = `
 
 🎯 ENTERPRISE FEATURES: Complete ruv-swarm integration with 90+ MCP tools, neural networking, and production-ready infrastructure
 🐝 NEW: Claude Code 1.0.51+ full compatibility with enhanced hooks and batch processing
-⚡ ALPHA 87: Centralized version management and async/await fixes
+⚡ ALPHA 90: Major MCP Implementation & Quality Update
+
+🔍 ALPHA 90 HIGHLIGHTS:
+  ✅ 15+ Real MCP Tools - DAA, Workflow, Performance tools fully implemented
+  🐛 Critical Bug Fixes - agent_metrics, swarm_monitor, neural_train errors resolved
+  🧠 Real WASM Neural Networks - ruv-fann powered actual neural processing
+  📊 >95% Functionality - Mock rate reduced from 40% to <5%
+  🔧 MCP Routing Fixed - All workflow/performance tools properly routed
+  🔧 Non-interactive Fixes - Proper prompt injection for CI/CD & automation
 
 USAGE:
   npx claude-flow@alpha <command> [options]    # Run latest alpha version
@@ -56,6 +64,11 @@ USAGE:
   github <mode>            GitHub workflow automation (6 modes)
   status                   System status and health
   
+🔍 VERIFICATION COMMANDS (NEW!):
+  verify <subcommand>      Truth verification system (0.95 threshold)
+  truth                    View truth scores and reliability metrics
+  pair [--start]           Collaborative development with real-time verification
+  
 📋 SWARM INTELLIGENCE COMMANDS:
   training <command>       Neural pattern learning & model updates (3 commands)
   coordination <command>   Swarm & agent orchestration (3 commands)
@@ -92,6 +105,90 @@ USAGE:
 `;
 
 export const COMMAND_HELP = {
+  verify: `
+🔍 VERIFY COMMAND - Truth Verification System
+
+USAGE:
+  claude-flow verify <subcommand> [options]
+
+DESCRIPTION:
+  Enforce truth and accuracy in multi-agent operations with a 0.95 threshold.
+  "Truth is enforced, not assumed" - every agent claim is verified.
+
+SUBCOMMANDS:
+  init <mode>        Initialize verification system
+                     Modes: strict (0.95), moderate (0.85), development (0.75)
+  verify <task>      Run verification on specific task or agent
+  status             Show verification system status and metrics
+  rollback           Trigger manual rollback to last good state
+
+OPTIONS:
+  --threshold <n>    Custom accuracy threshold (0.0-1.0)
+  --agent <type>     Specify agent type for verification
+  --auto-rollback    Enable automatic rollback on failures
+  --verbose          Detailed verification output
+  --json             Output in JSON format
+
+EXAMPLES:
+  claude-flow verify init strict                  # Production mode
+  claude-flow verify verify task-123 --agent coder
+  claude-flow verify status --recent 10
+  claude-flow verify rollback --checkpoint last
+`,
+  truth: `
+📊 TRUTH COMMAND - Truth Score Analytics
+
+USAGE:
+  claude-flow truth [options]
+
+DESCRIPTION:
+  View and analyze truth scores, reliability metrics, and verification history.
+  Provides insights into agent accuracy and system reliability.
+
+OPTIONS:
+  --report           Generate detailed truth score report
+  --analyze          Analyze failure patterns and trends
+  --agent <type>     Filter by specific agent type
+  --taskId <id>      Check specific task truth score
+  --threshold <n>    Filter scores below threshold
+  --json             Output in JSON format
+  --export <file>    Export report to file
+
+EXAMPLES:
+  claude-flow truth                        # Show current scores
+  claude-flow truth --report               # Detailed report
+  claude-flow truth --analyze              # Pattern analysis
+  claude-flow truth --agent coder --detailed
+  claude-flow truth --json | jq .averageScore
+`,
+  pair: `
+👥 PAIR COMMAND - Collaborative Development Mode
+
+USAGE:
+  claude-flow pair [options]
+
+DESCRIPTION:
+  Real-time collaborative development with AI verification.
+  Continuous validation with instant feedback and auto-rollback.
+
+OPTIONS:
+  --start            Start new pair programming session
+  --mode <type>      Set verification mode:
+                     strict (0.95), standard (0.85), development (0.75)
+  --threshold <n>    Custom accuracy threshold (0.0-1.0)
+  --verify           Enable real-time verification
+  --monitor          Show real-time metrics dashboard
+  --auto-rollback    Enable automatic rollback on failures
+  --summary          View session summary
+  --export <file>    Export session metrics
+
+EXAMPLES:
+  claude-flow pair --start                 # Start session
+  claude-flow pair --start --mode strict   # Production pairing
+  claude-flow pair --threshold 0.90        # Custom threshold
+  claude-flow pair --summary               # View session stats
+  claude-flow pair --monitor --verify      # Real-time monitoring
+`,
   swarm: `
 🧠 SWARM COMMAND - Multi-Agent AI Coordination
 

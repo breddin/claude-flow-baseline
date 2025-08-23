@@ -14,6 +14,14 @@ export {
   initializeAgenticFlowHooks,
 } from '../services/agentic-flow-hooks/index.js';
 
+// Re-export verification system
+export {
+  verificationHookManager,
+  initializeVerificationSystem,
+  getVerificationSystemStatus,
+  shutdownVerificationSystem,
+} from '../verification/index.js';
+
 // Re-export modern types with compatibility aliases
 export type {
   AgenticHookContext as HookExecutionContext,
@@ -162,7 +170,17 @@ export function createHookEngine(config?: any) {
 export async function setupDefaultHooks(engine?: any) {
   console.warn('setupDefaultHooks is deprecated. Use agenticHookManager.register() to register specific hooks instead.');
   console.info('Consider migrating to agentic-flow-hooks for advanced pipeline management and neural integration.');
-  return 4; // Return count for backward compatibility
+  
+  // Initialize verification system as part of default setup
+  try {
+    const { initializeVerificationSystem } = await import('../verification/index.js');
+    await initializeVerificationSystem();
+    console.info('✅ Verification system initialized with default hooks');
+    return 9; // 4 legacy + 5 verification hooks
+  } catch (error) {
+    console.warn('Failed to initialize verification system:', error);
+    return 4; // Return legacy count for backward compatibility
+  }
 }
 
 // Migration notice for users
@@ -178,15 +196,26 @@ agentic-flow-hooks system for better performance and functionality.
   - Performance optimization
   - Memory coordination hooks
   - LLM integration hooks
+  - Comprehensive verification system
+
+🆕 Verification System:
+  - Pre-task verification hooks
+  - Post-task validation hooks
+  - Integration test hooks
+  - Truth telemetry hooks
+  - Rollback trigger hooks
 
 📖 Migration Guide:
   - Replace AgentHookEngine with agenticHookManager
   - Update hook registrations to use modern HookRegistration interface
   - Leverage new hook types: LLM, memory, neural, performance, workflow
+  - Use verification hooks for quality assurance
   - See docs/maestro/specs/hooks-refactoring-plan.md for details
 
 🚀 Get Started:
   import { agenticHookManager, initializeAgenticFlowHooks } from '../services/agentic-flow-hooks/'
+  import { verificationHookManager, initializeVerificationSystem } from '../verification/'
   await initializeAgenticFlowHooks()
+  await initializeVerificationSystem()
   agenticHookManager.register({ ... })
 `);

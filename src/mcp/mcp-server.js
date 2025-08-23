@@ -12,6 +12,36 @@ import { EnhancedMemory } from '../memory/enhanced-memory.js';
 // Use the same memory system that npx commands use - singleton instance
 import { memoryStore } from '../memory/fallback-store.js';
 
+// Initialize agent tracker
+await import('./implementations/agent-tracker.js').catch(() => {
+  // If ES module import fails, try require
+  try {
+    require('./implementations/agent-tracker');
+  } catch (e) {
+    console.log('Agent tracker not loaded');
+  }
+});
+
+// Initialize DAA manager
+await import('./implementations/daa-tools.js').catch(() => {
+  // If ES module import fails, try require
+  try {
+    require('./implementations/daa-tools');
+  } catch (e) {
+    console.log('DAA manager not loaded');
+  }
+});
+
+// Initialize Workflow and Performance managers
+await import('./implementations/workflow-tools.js').catch(() => {
+  // If ES module import fails, try require
+  try {
+    require('./implementations/workflow-tools');
+  } catch (e) {
+    console.log('Workflow tools not loaded');
+  }
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -1051,6 +1081,16 @@ class ClaudeFlowMCPServer {
     switch (name) {
       case 'swarm_init':
         const swarmId = `swarm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Track swarm creation
+        if (global.agentTracker) {
+          global.agentTracker.trackSwarm(swarmId, {
+            topology: args.topology || 'mesh',
+            maxAgents: args.maxAgents || 5,
+            strategy: args.strategy || 'balanced',
+          });
+        }
+        
         const swarmData = {
           id: swarmId,
           name: `Swarm-${new Date().toISOString().split('T')[0]}`,
@@ -1139,6 +1179,14 @@ class ClaudeFlowMCPServer {
           );
         }
 
+        // Track spawned agent
+        if (global.agentTracker) {
+          global.agentTracker.trackAgent(agentId, {
+            ...agentData,
+            capabilities: args.capabilities || [],
+          });
+        }
+        
         return {
           success: true,
           agentId: agentId,
@@ -1398,6 +1446,22 @@ class ClaudeFlowMCPServer {
         };
 
       case 'agent_list':
+        // First check agent tracker for real-time data
+        if (global.agentTracker) {
+          const swarmId = args.swarmId || (await this.getActiveSwarmId());
+          const trackedAgents = global.agentTracker.getAgents(swarmId);
+          
+          if (trackedAgents.length > 0) {
+            return {
+              success: true,
+              swarmId: swarmId || 'dynamic',
+              agents: trackedAgents,
+              count: trackedAgents.length,
+              timestamp: new Date().toISOString(),
+            };
+          }
+        }
+        
         if (this.databaseManager) {
           try {
             const swarmId = args.swarmId || (await this.getActiveSwarmId());
@@ -1481,6 +1545,29 @@ class ClaudeFlowMCPServer {
               error: 'No active swarm found',
               timestamp: new Date().toISOString(),
             };
+          }
+          
+          // Check agent tracker for real counts
+          if (global.agentTracker) {
+            const status = global.agentTracker.getSwarmStatus(swarmId);
+            if (status.agentCount > 0) {
+              const swarmDataRaw = await this.memoryStore.retrieve(`swarm:${swarmId}`, {
+                namespace: 'swarms',
+              });
+              const swarm = swarmDataRaw ? (typeof swarmDataRaw === 'string' ? JSON.parse(swarmDataRaw) : swarmDataRaw) : {};
+              
+              return {
+                success: true,
+                swarmId: swarmId,
+                topology: swarm.topology || 'mesh',
+                agentCount: status.agentCount,
+                activeAgents: status.activeAgents,
+                taskCount: status.taskCount,
+                pendingTasks: status.pendingTasks,
+                completedTasks: status.completedTasks,
+                timestamp: new Date().toISOString(),
+              };
+            }
           }
 
           // Retrieve swarm data from memory store
@@ -1584,6 +1671,17 @@ class ClaudeFlowMCPServer {
 
       case 'task_orchestrate':
         const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Track task creation
+        if (global.agentTracker) {
+          global.agentTracker.trackTask(taskId, {
+            task: args.task,
+            strategy: args.strategy || 'parallel',
+            priority: args.priority || 'medium',
+            status: 'pending',
+            swarmId: args.swarmId,
+          });
+        }
         const swarmIdForTask = args.swarmId || (await this.getActiveSwarmId());
         const taskData = {
           id: taskId,
@@ -1637,6 +1735,159 @@ class ClaudeFlowMCPServer {
           timestamp: new Date().toISOString(),
         };
 
+      // DAA Tools Implementation
+      case 'daa_agent_create':
+        if (global.daaManager) {
+          return global.daaManager.daa_agent_create(args);
+        }
+        return {
+          success: false,
+          error: 'DAA manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'daa_capability_match':
+        if (global.daaManager) {
+          return global.daaManager.daa_capability_match(args);
+        }
+        return {
+          success: false,
+          error: 'DAA manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'daa_resource_alloc':
+        if (global.daaManager) {
+          return global.daaManager.daa_resource_alloc(args);
+        }
+        return {
+          success: false,
+          error: 'DAA manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'daa_lifecycle_manage':
+        if (global.daaManager) {
+          return global.daaManager.daa_lifecycle_manage(args);
+        }
+        return {
+          success: false,
+          error: 'DAA manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'daa_communication':
+        if (global.daaManager) {
+          return global.daaManager.daa_communication(args);
+        }
+        return {
+          success: false,
+          error: 'DAA manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'daa_consensus':
+        if (global.daaManager) {
+          return global.daaManager.daa_consensus(args);
+        }
+        return {
+          success: false,
+          error: 'DAA manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      // Workflow Tools Implementation
+      case 'workflow_create':
+        if (global.workflowManager) {
+          return global.workflowManager.workflow_create(args);
+        }
+        return {
+          success: false,
+          error: 'Workflow manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'workflow_execute':
+        if (global.workflowManager) {
+          return global.workflowManager.workflow_execute(args);
+        }
+        return {
+          success: false,
+          error: 'Workflow manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'parallel_execute':
+        if (global.workflowManager) {
+          return global.workflowManager.parallel_execute(args);
+        }
+        return {
+          success: false,
+          error: 'Workflow manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'batch_process':
+        if (global.workflowManager) {
+          return global.workflowManager.batch_process(args);
+        }
+        return {
+          success: false,
+          error: 'Workflow manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'workflow_export':
+        if (global.workflowManager) {
+          return global.workflowManager.workflow_export(args);
+        }
+        return {
+          success: false,
+          error: 'Workflow manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'workflow_template':
+        if (global.workflowManager) {
+          return global.workflowManager.workflow_template(args);
+        }
+        return {
+          success: false,
+          error: 'Workflow manager not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      // Performance Tools Implementation
+      case 'performance_report':
+        if (global.performanceMonitor) {
+          return global.performanceMonitor.performance_report(args);
+        }
+        return {
+          success: false,
+          error: 'Performance monitor not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'bottleneck_analyze':
+        if (global.performanceMonitor) {
+          return global.performanceMonitor.bottleneck_analyze(args);
+        }
+        return {
+          success: false,
+          error: 'Performance monitor not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
+      case 'memory_analytics':
+        if (global.performanceMonitor) {
+          return global.performanceMonitor.memory_analytics(args);
+        }
+        return {
+          success: false,
+          error: 'Performance monitor not initialized',
+          timestamp: new Date().toISOString(),
+        };
+        
       default:
         return {
           success: true,

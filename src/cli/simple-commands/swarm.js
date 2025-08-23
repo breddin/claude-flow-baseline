@@ -778,21 +778,33 @@ The swarm should be self-documenting - use memory_store to save all important in
         console.log('🚀 Launching Claude Code with Swarm Coordination');
         console.log('─'.repeat(60));
         
-        // Pass the prompt directly as an argument to claude
-        const claudeArgs = [swarmPrompt];
+        // Build arguments properly: for interactive mode, prompt can be first
+        const claudeArgs = [];
         
-        // Add auto-permission flag by default for swarm mode (unless explicitly disabled)
+        // Add auto-permission flag first
         if (flags['dangerously-skip-permissions'] !== false && !flags['no-auto-permissions']) {
           claudeArgs.push('--dangerously-skip-permissions');
           console.log('🔓 Using --dangerously-skip-permissions by default for seamless swarm execution');
         }
         
+        // Add the prompt (for interactive mode, position doesn't matter as much)
+        claudeArgs.push(swarmPrompt);
+        
         // --claude flag means interactive mode, so don't add non-interactive flags
         
-        // Spawn claude with the prompt as the first argument (exactly like hive-mind does)
+        // For --claude interactive mode, spawn Claude directly
+        // Temporarily disable telemetry to avoid console output interference
+        const claudeEnv = { ...process.env };
+        
+        // Remove telemetry env vars to prevent console output
+        delete claudeEnv.CLAUDE_CODE_ENABLE_TELEMETRY;
+        delete claudeEnv.OTEL_METRICS_EXPORTER;
+        delete claudeEnv.OTEL_LOGS_EXPORTER;
+        
         const claudeProcess = spawn('claude', claudeArgs, {
           stdio: 'inherit',
           shell: false,
+          env: claudeEnv
         });
         
         console.log('\n✓ Claude Code launched with swarm coordination prompt!');
@@ -893,10 +905,17 @@ The swarm should be self-documenting - use memory_store to save all important in
 
       // Continue with the default swarm behavior if not using --claude flag
 
-      // Pass the prompt directly as an argument to claude
-      const claudeArgs = [swarmPrompt];
+      // Build arguments in correct order: flags first, then prompt
+      const claudeArgs = [];
 
-      // Add auto-permission flag by default for swarm mode (unless explicitly disabled)
+      // Add non-interactive flags FIRST if needed
+      if (isNonInteractive) {
+        claudeArgs.push('-p'); // Print mode
+        claudeArgs.push('--output-format', 'stream-json'); // JSON streaming
+        claudeArgs.push('--verbose'); // Verbose output
+      }
+
+      // Add auto-permission flag BEFORE the prompt
       if (flags['dangerously-skip-permissions'] !== false && !flags['no-auto-permissions']) {
         claudeArgs.push('--dangerously-skip-permissions');
         if (!isNonInteractive) {
@@ -906,14 +925,10 @@ The swarm should be self-documenting - use memory_store to save all important in
         }
       }
 
-      // Add non-interactive flags if needed
-      if (isNonInteractive) {
-        claudeArgs.push('-p'); // Print mode
-        claudeArgs.push('--output-format', 'stream-json'); // JSON streaming
-        claudeArgs.push('--verbose'); // Verbose output
-      }
+      // Add the prompt as the LAST argument
+      claudeArgs.push(swarmPrompt);
 
-      // Spawn claude with the prompt as the first argument
+      // Spawn claude with properly ordered arguments
       const claudeProcess = spawn('claude', claudeArgs, {
         stdio: 'inherit',
         shell: false,
