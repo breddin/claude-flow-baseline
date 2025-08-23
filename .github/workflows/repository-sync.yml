@@ -27,9 +27,35 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
+  check-permissions:
+    name: Check Permissions
+    runs-on: ubuntu-latest
+    outputs:
+      can-sync: ${{ steps.check.outputs.can-sync }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check cross-repo permissions
+        id: check
+        run: |
+          echo "Checking if token has cross-repository permissions..."
+          
+          # Test if we can access downstream repositories
+          if gh repo view breddin/claude-flow-github >/dev/null 2>&1; then
+            echo "✅ Can access claude-flow-github"
+            echo "can-sync=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Cannot access claude-flow-github"
+            echo "can-sync=false" >> $GITHUB_OUTPUT
+            echo "::warning::Limited permissions detected. Cross-repository sync will be disabled."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   determine-repo-type:
     name: Determine Repository Type
     runs-on: ubuntu-latest
+    needs: check-permissions
     outputs:
       repo-type: ${{ steps.detect.outputs.repo-type }}
     steps:
@@ -51,7 +77,7 @@ jobs:
   health-check:
     name: Repository Health Check
     runs-on: ubuntu-latest
-    needs: determine-repo-type
+    needs: [check-permissions, determine-repo-type]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -71,7 +97,7 @@ jobs:
   sync-baseline:
     name: Sync Baseline Repository
     runs-on: ubuntu-latest
-    needs: [determine-repo-type, health-check]
+    needs: [check-permissions, determine-repo-type, health-check]
     if: |
       needs.determine-repo-type.outputs.repo-type == 'baseline' && 
       (github.event.schedule || 
@@ -95,14 +121,15 @@ jobs:
       - name: Setup remotes and sync
         run: |
           chmod +x scripts/sync-manager.sh
-          ./scripts/sync-manager.sh setup-remotes baseline
+          ./scripts/sync-manager.sh setup-remotes
           ./scripts/sync-manager.sh sync-baseline
 
   sync-github:
     name: Sync GitHub Repository
     runs-on: ubuntu-latest
-    needs: [determine-repo-type, health-check]
+    needs: [check-permissions, determine-repo-type, health-check]
     if: |
+      needs.check-permissions.outputs.can-sync == 'true' &&
       needs.determine-repo-type.outputs.repo-type == 'github' && 
       (github.event.inputs.sync_type == 'sync-github' || 
        github.event.inputs.sync_type == 'full-sync')
@@ -130,8 +157,9 @@ jobs:
   sync-ballerina:
     name: Sync Ballerina Repository
     runs-on: ubuntu-latest
-    needs: [determine-repo-type, health-check]
+    needs: [check-permissions, determine-repo-type, health-check]
     if: |
+      needs.check-permissions.outputs.can-sync == 'true' &&
       needs.determine-repo-type.outputs.repo-type == 'ballerina' && 
       (github.event.inputs.sync_type == 'sync-ballerina' || 
        github.event.inputs.sync_type == 'full-sync')
