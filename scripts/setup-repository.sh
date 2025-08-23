@@ -51,18 +51,18 @@ setup_remotes() {
     
     case "$repo_type" in
         "baseline")
-            log "Adding upstream: ruvnet/claude-code-flow"
-            git remote add upstream https://github.com/ruvnet/claude-code-flow.git 2>/dev/null || \
-                git remote set-url upstream https://github.com/ruvnet/claude-code-flow.git
+            log "Adding upstream: ruvnet/claude-flow"
+            git remote add upstream https://github.com/ruvnet/claude-flow.git 2>/dev/null || \
+                git remote set-url upstream https://github.com/ruvnet/claude-flow.git
             ;;
         "github")
             log "Adding upstream: breddin/claude-flow-baseline"
             git remote add upstream https://github.com/breddin/claude-flow-baseline.git 2>/dev/null || \
                 git remote set-url upstream https://github.com/breddin/claude-flow-baseline.git
             
-            log "Adding master-upstream: ruvnet/claude-code-flow"
-            git remote add master-upstream https://github.com/ruvnet/claude-code-flow.git 2>/dev/null || \
-                git remote set-url master-upstream https://github.com/ruvnet/claude-code-flow.git
+            log "Adding master-upstream: ruvnet/claude-flow"
+            git remote add master-upstream https://github.com/ruvnet/claude-flow.git 2>/dev/null || \
+                git remote set-url master-upstream https://github.com/ruvnet/claude-flow.git
             ;;
         "ballerina")
             log "Adding upstream: breddin/claude-flow-github"
@@ -73,9 +73,9 @@ setup_remotes() {
             git remote add baseline-upstream https://github.com/breddin/claude-flow-baseline.git 2>/dev/null || \
                 git remote set-url baseline-upstream https://github.com/breddin/claude-flow-baseline.git
             
-            log "Adding master-upstream: ruvnet/claude-code-flow"
-            git remote add master-upstream https://github.com/ruvnet/claude-code-flow.git 2>/dev/null || \
-                git remote set-url master-upstream https://github.com/ruvnet/claude-code-flow.git
+            log "Adding master-upstream: ruvnet/claude-flow"
+            git remote add master-upstream https://github.com/ruvnet/claude-flow.git 2>/dev/null || \
+                git remote set-url master-upstream https://github.com/ruvnet/claude-flow.git
             ;;
         *)
             error "Unknown repository type: $repo_type"
