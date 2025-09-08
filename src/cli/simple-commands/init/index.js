@@ -41,7 +41,7 @@ import { createOptimizedClaudeSlashCommands } from './claude-commands/optimized-
 import { promises as fs } from 'fs';
 import { copyTemplates } from './template-copier.js';
 import { copyRevisedTemplates, validateTemplatesExist } from './copy-revised-templates.js';
-import { copyAgentFiles, createAgentDirectories, validateAgentSystem } from './agent-copier.js';
+import { copyAgentFiles, createAgentDirectories, validateAgentSystem, copyCommandFiles } from './agent-copier.js';
 import { showInitHelp } from './help.js';
 import { batchInitCommand, batchInitFromConfig, validateBatchOptions } from './batch-init.js';
 import { ValidationSystem, runFullValidation } from './validation/index.js';
@@ -110,6 +110,11 @@ async function setupMcpServers(dryRun = false) {
       command: 'npx ruv-swarm mcp start',
       description: 'ruv-swarm MCP server for enhanced coordination',
     },
+    {
+      name: 'flow-nexus',
+      command: 'npx flow-nexus@latest mcp start',
+      description: 'Flow Nexus Complete MCP server for advanced AI orchestration',
+    },
   ];
 
   for (const server of servers) {
@@ -150,6 +155,11 @@ export async function initCommand(subArgs, flags) {
   const hasVerificationFlags = subArgs.includes('--verify') || subArgs.includes('--pair') || 
                                flags.verify || flags.pair;
   
+  // Handle Flow Nexus minimal init
+  if (flags['flow-nexus']) {
+    return await flowNexusMinimalInit(flags, subArgs);
+  }
+
   // Default to enhanced Claude Flow v2 init unless other modes are specified
   // Use --basic flag for old behavior, or verification flags for verification mode
   if (!flags.basic && !flags.minimal && !flags.sparc && !hasVerificationFlags) {
@@ -187,7 +197,7 @@ export async function initCommand(subArgs, flags) {
   // Parse init options
   const initForce = subArgs.includes('--force') || subArgs.includes('-f') || flags.force;
   const initMinimal = subArgs.includes('--minimal') || subArgs.includes('-m') || flags.minimal;
-  const initSparc = true; // SPARC is now included by default
+  const initSparc = flags.roo || (subArgs && subArgs.includes('--roo')); // SPARC only with --roo flag
   const initDryRun = subArgs.includes('--dry-run') || subArgs.includes('-d') || flags.dryRun;
   const initOptimized = initSparc && initForce; // Use optimized templates when both flags are present
   const selectedModes = flags.modes ? flags.modes.split(',') : null; // Support selective mode initialization
@@ -529,6 +539,7 @@ export async function initCommand(subArgs, flags) {
         console.log('  📋 Then add MCP servers manually with:');
         console.log('     claude mcp add claude-flow claude-flow mcp start');
         console.log('     claude mcp add ruv-swarm npx ruv-swarm mcp start');
+        console.log('     claude mcp add flow-nexus npx flow-nexus@latest mcp start');
       }
     }
   } catch (err) {
@@ -1096,6 +1107,7 @@ async function enhancedClaudeFlowInit(flags, subArgs = []) {
   const workingDir = process.cwd();
   const force = flags.force || flags.f;
   const dryRun = flags.dryRun || flags['dry-run'] || flags.d;
+  const initSparc = flags.roo || (subArgs && subArgs.includes('--roo')); // SPARC only with --roo flag
 
   // Store parameters to avoid scope issues in async context
   const args = subArgs || [];
@@ -1397,21 +1409,23 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
       console.log(`  ⚠️  ${gitignoreResult.message}`);
     }
 
-    // SPARC initialization (now included by default)
-    console.log('\n🚀 Initializing SPARC development environment...');
+    // SPARC initialization (only with --roo flag)
     let sparcInitialized = false;
-    try {
-      // Run create-sparc
-      console.log('  🔄 Running: npx -y create-sparc init --force');
-      execSync('npx -y create-sparc init --force', {
-        cwd: workingDir,
-        stdio: 'inherit',
-      });
-      sparcInitialized = true;
-      printSuccess('✅ SPARC environment initialized successfully');
-    } catch (err) {
-      console.log(`  ⚠️  Could not run create-sparc: ${err.message}`);
-      console.log('     SPARC features will be limited to basic functionality');
+    if (initSparc) {
+      console.log('\n🚀 Initializing SPARC development environment...');
+      try {
+        // Run create-sparc
+        console.log('  🔄 Running: npx -y create-sparc init --force');
+        execSync('npx -y create-sparc init --force', {
+          cwd: workingDir,
+          stdio: 'inherit',
+        });
+        sparcInitialized = true;
+        printSuccess('✅ SPARC environment initialized successfully');
+      } catch (err) {
+        console.log(`  ⚠️  Could not run create-sparc: ${err.message}`);
+        console.log('     SPARC features will be limited to basic functionality');
+      }
     }
 
     // Create Claude slash commands for SPARC
@@ -1434,6 +1448,7 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
         console.log('\n  📋 To add MCP servers manually:');
         console.log('     claude mcp add claude-flow npx claude-flow@alpha mcp start');
         console.log('     claude mcp add ruv-swarm npx ruv-swarm@latest mcp start');
+        console.log('     claude mcp add flow-nexus npx flow-nexus@latest mcp start');
         console.log('\n  💡 MCP servers are defined in .mcp.json (project scope)');
       }
     } else if (!dryRun && !isClaudeCodeInstalled()) {
@@ -1443,6 +1458,7 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
       console.log('\n  📋 After installing, add MCP servers:');
       console.log('     claude mcp add claude-flow npx claude-flow@alpha mcp start');
       console.log('     claude mcp add ruv-swarm npx ruv-swarm@latest mcp start');
+      console.log('     claude mcp add flow-nexus npx flow-nexus@latest mcp start');
       console.log('\n  💡 MCP servers are defined in .mcp.json (project scope)');
     }
 
@@ -1457,6 +1473,20 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
       
       if (agentResult.success) {
         await validateAgentSystem(workingDir);
+        
+        // Copy command files including Flow Nexus commands
+        console.log('\n📚 Setting up command system...');
+        const commandResult = await copyCommandFiles(workingDir, {
+          force: force,
+          dryRun: dryRun
+        });
+        
+        if (commandResult.success) {
+          console.log('✅ ✓ Command system setup complete with Flow Nexus integration');
+        } else {
+          console.log('⚠️  Command system setup failed:', commandResult.error);
+        }
+        
         console.log('✅ ✓ Agent system setup complete with 64 specialized agents');
       } else {
         console.log('⚠️  Agent system setup failed:', agentResult.error);
@@ -1526,5 +1556,97 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
     } catch (rollbackErr) {
       console.log(`  ⚠️  Rollback error: ${rollbackErr.message}`);
     }
+  }
+}
+
+/**
+ * Flow Nexus minimal initialization - only creates Flow Nexus CLAUDE.md, commands, and agents
+ */
+async function flowNexusMinimalInit(flags, subArgs) {
+  console.log('🌐 Flow Nexus: Initializing minimal setup...');
+  
+  try {
+    const force = flags.force || flags.f;
+    
+    // Import functions we need
+    const { createFlowNexusClaudeMd } = await import('./templates/claude-md.js');
+    const { promises: fs } = await import('fs');
+    
+    // Create Flow Nexus CLAUDE.md
+    console.log('📝 Creating Flow Nexus CLAUDE.md...');
+    const flowNexusClaudeMd = createFlowNexusClaudeMd();
+    await fs.writeFile('CLAUDE.md', flowNexusClaudeMd);
+    console.log('  ✅ Created CLAUDE.md with Flow Nexus integration');
+    
+    // Create .claude/commands/flow-nexus directory and copy commands
+    console.log('📁 Setting up Flow Nexus commands...');
+    await fs.mkdir('.claude/commands/flow-nexus', { recursive: true });
+    
+    // Copy Flow Nexus command files
+    const { fileURLToPath } = await import('url');
+    const { dirname, join } = await import('path');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const sourceCommandsDir = join(__dirname, '../../../../.claude/commands/flow-nexus');
+    try {
+      const commandFiles = await fs.readdir(sourceCommandsDir);
+      let copiedCommands = 0;
+      
+      for (const file of commandFiles) {
+        if (file.endsWith('.md')) {
+          const sourcePath = `${sourceCommandsDir}/${file}`;
+          const destPath = `.claude/commands/flow-nexus/${file}`;
+          const content = await fs.readFile(sourcePath, 'utf8');
+          await fs.writeFile(destPath, content);
+          copiedCommands++;
+        }
+      }
+      
+      console.log(`  ✅ Copied ${copiedCommands} Flow Nexus command files`);
+    } catch (err) {
+      console.log('  ⚠️  Could not copy Flow Nexus commands:', err.message);
+    }
+    
+    // Create .claude/agents/flow-nexus directory and copy agents
+    console.log('🤖 Setting up Flow Nexus agents...');
+    await fs.mkdir('.claude/agents/flow-nexus', { recursive: true });
+    
+    // Copy Flow Nexus agent files
+    const sourceAgentsDir = join(__dirname, '../../../../.claude/agents/flow-nexus');
+    try {
+      const agentFiles = await fs.readdir(sourceAgentsDir);
+      let copiedAgents = 0;
+      
+      for (const file of agentFiles) {
+        if (file.endsWith('.md')) {
+          const sourcePath = `${sourceAgentsDir}/${file}`;
+          const destPath = `.claude/agents/flow-nexus/${file}`;
+          const content = await fs.readFile(sourcePath, 'utf8');
+          await fs.writeFile(destPath, content);
+          copiedAgents++;
+        }
+      }
+      
+      console.log(`  ✅ Copied ${copiedAgents} Flow Nexus agent files`);
+    } catch (err) {
+      console.log('  ⚠️  Could not copy Flow Nexus agents:', err.message);
+    }
+    
+    console.log('\n🎉 Flow Nexus minimal initialization complete!');
+    console.log('📚 Created: CLAUDE.md with Flow Nexus documentation');
+    console.log('📁 Created: .claude/commands/flow-nexus/ directory with command documentation');
+    console.log('🤖 Created: .claude/agents/flow-nexus/ directory with specialized agents');
+    console.log('');
+    console.log('💡 Quick Start:');
+    console.log('  1. Register: mcp__flow-nexus__user_register({ email, password })');
+    console.log('  2. Login: mcp__flow-nexus__user_login({ email, password })');
+    console.log('  3. Deploy: mcp__flow-nexus__swarm_init({ topology: "mesh", maxAgents: 5 })');
+    console.log('');
+    console.log('🔗 Use Flow Nexus MCP tools in Claude Code for full functionality');
+    
+  } catch (err) {
+    console.log(`❌ Flow Nexus initialization failed: ${err.message}`);
+    console.log('Stack trace:', err.stack);
+    process.exit(1);
   }
 }

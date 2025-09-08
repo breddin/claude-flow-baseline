@@ -969,6 +969,256 @@ npx claude-flow workflow export --name "deploy-api" --include-history
 \`\`\`
 `,
     },
+    swarm: {
+      'swarm': `# swarm
+
+Main swarm orchestration command for Claude Flow.
+
+## Usage
+\`\`\`bash
+npx claude-flow swarm <objective> [options]
+\`\`\`
+
+## Options
+- \`--strategy <type>\` - Execution strategy (research, development, analysis, testing)
+- \`--mode <type>\` - Coordination mode (centralized, distributed, hierarchical, mesh)
+- \`--max-agents <n>\` - Maximum number of agents (default: 5)
+- \`--claude\` - Open Claude Code CLI with swarm prompt
+- \`--parallel\` - Enable parallel execution
+
+## Examples
+\`\`\`bash
+# Basic swarm
+npx claude-flow swarm "Build REST API"
+
+# With strategy
+npx claude-flow swarm "Research AI patterns" --strategy research
+
+# Open in Claude Code
+npx claude-flow swarm "Build API" --claude
+\`\`\`
+`,
+      'swarm-init': `# swarm-init
+
+Initialize a new swarm with specified topology.
+
+## Usage
+\`\`\`bash
+npx claude-flow swarm init [options]
+\`\`\`
+
+## Options
+- \`--topology <type>\` - Swarm topology (mesh, hierarchical, ring, star)
+- \`--max-agents <n>\` - Maximum agents
+- \`--strategy <type>\` - Distribution strategy
+
+## Examples
+\`\`\`bash
+npx claude-flow swarm init --topology mesh
+npx claude-flow swarm init --topology hierarchical --max-agents 8
+\`\`\`
+`,
+      'swarm-spawn': `# swarm-spawn
+
+Spawn agents in the swarm.
+
+## Usage
+\`\`\`bash
+npx claude-flow swarm spawn [options]
+\`\`\`
+
+## Options
+- \`--type <type>\` - Agent type
+- \`--count <n>\` - Number to spawn
+- \`--capabilities <list>\` - Agent capabilities
+
+## Examples
+\`\`\`bash
+npx claude-flow swarm spawn --type coder --count 3
+npx claude-flow swarm spawn --type researcher --capabilities "web-search,analysis"
+\`\`\`
+`,
+    },
+    'hive-mind': {
+      'hive-mind': `# hive-mind
+
+Hive Mind collective intelligence system for advanced swarm coordination.
+
+## Usage
+\`\`\`bash
+npx claude-flow hive-mind [subcommand] [options]
+\`\`\`
+
+## Subcommands
+- \`init\` - Initialize hive mind system
+- \`spawn\` - Spawn hive mind swarm
+- \`status\` - Show hive mind status
+- \`resume\` - Resume paused session
+- \`stop\` - Stop running session
+
+## Examples
+\`\`\`bash
+# Initialize hive mind
+npx claude-flow hive-mind init
+
+# Spawn swarm
+npx claude-flow hive-mind spawn "Build microservices"
+
+# Check status
+npx claude-flow hive-mind status
+\`\`\`
+`,
+      'hive-mind-init': `# hive-mind-init
+
+Initialize the Hive Mind collective intelligence system.
+
+## Usage
+\`\`\`bash
+npx claude-flow hive-mind init [options]
+\`\`\`
+
+## Options
+- \`--force\` - Force reinitialize
+- \`--config <file>\` - Configuration file
+
+## Examples
+\`\`\`bash
+npx claude-flow hive-mind init
+npx claude-flow hive-mind init --force
+\`\`\`
+`,
+      'hive-mind-spawn': `# hive-mind-spawn
+
+Spawn a Hive Mind swarm with queen-led coordination.
+
+## Usage
+\`\`\`bash
+npx claude-flow hive-mind spawn <objective> [options]
+\`\`\`
+
+## Options
+- \`--queen-type <type>\` - Queen type (strategic, tactical, adaptive)
+- \`--max-workers <n>\` - Maximum worker agents
+- \`--consensus <type>\` - Consensus algorithm
+- \`--claude\` - Generate Claude Code spawn commands
+
+## Examples
+\`\`\`bash
+npx claude-flow hive-mind spawn "Build API"
+npx claude-flow hive-mind spawn "Research patterns" --queen-type adaptive
+npx claude-flow hive-mind spawn "Build service" --claude
+\`\`\`
+`,
+    },
+    agents: {
+      'agent-types': `# agent-types
+
+Complete guide to all 54 available agent types in Claude Flow.
+
+## Core Development Agents
+- \`coder\` - Implementation specialist
+- \`reviewer\` - Code quality assurance
+- \`tester\` - Test creation and validation
+- \`planner\` - Strategic planning
+- \`researcher\` - Information gathering
+
+## Swarm Coordination Agents
+- \`hierarchical-coordinator\` - Queen-led coordination
+- \`mesh-coordinator\` - Peer-to-peer networks
+- \`adaptive-coordinator\` - Dynamic topology
+
+## Specialized Agents
+- \`backend-dev\` - API development
+- \`mobile-dev\` - React Native development
+- \`ml-developer\` - Machine learning
+- \`system-architect\` - High-level design
+
+For full list and details:
+\`\`\`bash
+npx claude-flow agents list
+\`\`\`
+`,
+      'agent-capabilities': `# agent-capabilities
+
+Matrix of agent capabilities and their specializations.
+
+## Capability Matrix
+
+| Agent Type | Primary Skills | Best For |
+|------------|---------------|----------|
+| coder | Implementation, debugging | Feature development |
+| researcher | Analysis, synthesis | Requirements gathering |
+| tester | Testing, validation | Quality assurance |
+| architect | Design, planning | System architecture |
+
+## Querying Capabilities
+\`\`\`bash
+# List all capabilities
+npx claude-flow agents capabilities
+
+# For specific agent
+npx claude-flow agents capabilities --type coder
+\`\`\`
+`,
+      'agent-coordination': `# agent-coordination
+
+Coordination patterns for multi-agent collaboration.
+
+## Coordination Patterns
+
+### Hierarchical
+Queen-led with worker specialization
+\`\`\`bash
+npx claude-flow swarm init --topology hierarchical
+\`\`\`
+
+### Mesh
+Peer-to-peer collaboration
+\`\`\`bash
+npx claude-flow swarm init --topology mesh
+\`\`\`
+
+### Adaptive
+Dynamic topology based on workload
+\`\`\`bash
+npx claude-flow swarm init --topology adaptive
+\`\`\`
+
+## Best Practices
+- Use hierarchical for complex projects
+- Use mesh for research tasks
+- Use adaptive for unknown workloads
+`,
+      'agent-spawning': `# agent-spawning
+
+Guide to spawning agents with Claude Code's Task tool.
+
+## Using Claude Code's Task Tool
+
+**CRITICAL**: Always use Claude Code's Task tool for actual agent execution:
+
+\`\`\`javascript
+// Spawn ALL agents in ONE message
+Task("Researcher", "Analyze requirements...", "researcher")
+Task("Coder", "Implement features...", "coder")
+Task("Tester", "Create tests...", "tester")
+\`\`\`
+
+## MCP Coordination Setup (Optional)
+
+MCP tools are ONLY for coordination:
+\`\`\`javascript
+mcp__claude-flow__swarm_init { topology: "mesh" }
+mcp__claude-flow__agent_spawn { type: "researcher" }
+\`\`\`
+
+## Best Practices
+1. Always spawn agents concurrently
+2. Use Task tool for execution
+3. MCP only for coordination
+4. Batch all operations
+`,
+    },
   };
 
   return (
@@ -989,6 +1239,9 @@ export const COMMAND_STRUCTURE = {
   optimization: ['topology-optimize', 'parallel-execute', 'cache-manage'],
   training: ['neural-train', 'pattern-learn', 'model-update'],
   workflows: ['workflow-create', 'workflow-execute', 'workflow-export'],
+  swarm: ['swarm', 'swarm-init', 'swarm-spawn', 'swarm-status', 'swarm-monitor', 'swarm-strategies', 'swarm-modes', 'swarm-background', 'swarm-analysis'],
+  'hive-mind': ['hive-mind', 'hive-mind-init', 'hive-mind-spawn', 'hive-mind-status', 'hive-mind-resume', 'hive-mind-stop', 'hive-mind-sessions', 'hive-mind-consensus', 'hive-mind-memory', 'hive-mind-metrics', 'hive-mind-wizard'],
+  agents: ['agent-types', 'agent-capabilities', 'agent-coordination', 'agent-spawning'],
 };
 
 // Helper script content

@@ -28,7 +28,8 @@ This maps your `$_GITHUB_PAT` environment variable to `$GITHUB_TOKEN` for claude
 <div align="center">
 
 [![🌟 Star on GitHub](https://img.shields.io/github/stars/ruvnet/claude-flow?style=for-the-badge&logo=github&color=gold)](https://github.com/ruvnet/claude-flow)
-[![📦 Alpha Release](https://img.shields.io/npm/v/claude-flow/alpha?style=for-the-badge&logo=npm&color=orange&label=v2.0.0-alpha.53)](https://www.npmjs.com/package/claude-flow/v/alpha)
+[![📈 Downloads](https://img.shields.io/npm/dt/claude-flow?style=for-the-badge&logo=npm&color=blue&label=Downloads)](https://www.npmjs.com/package/claude-flow)
+[![📦 Latest Release](https://img.shields.io/npm/v/claude-flow?style=for-the-badge&logo=npm&color=green&label=v2.0.0)](https://www.npmjs.com/package/claude-flow)
 [![⚡ Claude Code](https://img.shields.io/badge/Claude%20Code-Optimized-green?style=for-the-badge&logo=anthropic)](https://github.com/ruvnet/claude-flow)
 [![🏛️ Agentics Foundation](https://img.shields.io/badge/Agentics-Foundation-crimson?style=for-the-badge&logo=openai)](https://discord.com/invite/dfxmpwkG2D)
 [![🐝 Hive-Mind](https://img.shields.io/badge/Hive--Mind-AI%20Coordination-purple?style=for-the-badge&logo=swarm)](https://github.com/ruvnet/claude-flow)
@@ -52,8 +53,21 @@ This maps your `$_GITHUB_PAT` environment variable to `$GITHUB_TOKEN` for claude
 - **💾 SQLite Memory System**: Persistent `.swarm/memory.db` with 12 specialized tables
 - **🪝 Advanced Hooks System**: Automated workflows with pre/post operation hooks
 - **📊 GitHub Integration**: 6 specialized modes for repository management
+- **🌐 Flow Nexus Cloud Platform**: E2B sandboxes, AI swarms, challenges, and marketplace integration
 
 > 🔥 **Revolutionary AI Coordination**: Build faster, smarter, and more efficiently with AI-powered development orchestration
+
+## 🌐 **Flow Nexus Cloud Platform**
+
+**NEW**: Claude-Flow v2.0.0 now includes **Flow Nexus integration** - a cloud-powered AI development platform featuring:
+
+- **E2B Sandboxes**: Secure isolated environments for Node.js, Python, React, Next.js
+- **AI Swarms**: Deploy multi-agent systems in cloud infrastructure  
+- **Neural Training**: Distributed machine learning with custom model deployment
+- **Challenges & Marketplace**: Coding challenges with rUv credit rewards and template marketplace
+- **Workflow Automation**: Event-driven automation with message queue processing
+
+> 📚 **Complete documentation**: Visit [flow-nexus.ruv.io](https://flow-nexus.ruv.io) for comprehensive guides, tutorials, and API reference. Also see issue # https://github.com/ruvnet/claude-flow/issues/732
 
 ## ⚡ **Try v2.0.0 Alpha in 4 Commands**
 
@@ -91,6 +105,21 @@ npx claude-flow@alpha swarm "build me a REST API" --claude
 # 3b. OR launch the full hive-mind system (for complex projects)
 npx claude-flow@alpha hive-mind wizard
 npx claude-flow@alpha hive-mind spawn "build enterprise system" --claude
+```
+
+### 🚀 **Quick Start with Flow Nexus**
+
+```bash
+# 1. Initialize Flow Nexus only (minimal setup)
+npx claude-flow init --flow-nexus
+
+# 2. Register and login (use MCP tools in Claude Code)
+mcp__flow-nexus__user_register({ email: "your@email.com", password: "secure" })
+mcp__flow-nexus__user_login({ email: "your@email.com", password: "secure" })
+
+# 3. Deploy your first cloud swarm
+mcp__flow-nexus__swarm_init({ topology: "mesh", maxAgents: 5 })
+mcp__flow-nexus__sandbox_create({ template: "node", name: "api-dev" })
 ```
 
 ### 🤔 **Swarm vs Hive-Mind: Which to Use?**

@@ -597,6 +597,44 @@ async function spawnSwarm(args, flags) {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (swarm_id) REFERENCES swarms(id)
       );
+      
+      CREATE TABLE IF NOT EXISTS sessions (
+        id TEXT PRIMARY KEY,
+        swarm_id TEXT NOT NULL,
+        swarm_name TEXT NOT NULL,
+        objective TEXT,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        paused_at DATETIME,
+        resumed_at DATETIME,
+        completion_percentage REAL DEFAULT 0,
+        checkpoint_data TEXT,
+        metadata TEXT,
+        parent_pid INTEGER,
+        child_pids TEXT,
+        FOREIGN KEY (swarm_id) REFERENCES swarms(id)
+      );
+      
+      CREATE TABLE IF NOT EXISTS session_checkpoints (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        checkpoint_name TEXT NOT NULL,
+        checkpoint_data TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (session_id) REFERENCES sessions(id)
+      );
+      
+      CREATE TABLE IF NOT EXISTS session_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        log_level TEXT DEFAULT 'info',
+        message TEXT,
+        agent_id TEXT,
+        data TEXT,
+        FOREIGN KEY (session_id) REFERENCES sessions(id)
+      );
     `);
       spinner.text = 'Database schema created successfully';
     } catch (error) {
@@ -2228,13 +2266,30 @@ ${workerTypes.map((type) => `• ${type}: ${workerGroups[type].length} agents`).
 
 As the Queen coordinator, you must:
 
-1. **INITIALIZE THE HIVE** (Single BatchTool Message):
-   [BatchTool]:
+1. **INITIALIZE THE HIVE** (CRITICAL: Use Claude Code's Task Tool for Agents):
+   
+   Step 1: Optional MCP Coordination Setup (Single Message):
+   [MCP Tools - Coordination Only]:
    ${workerTypes.map((type) => `   mcp__claude-flow__agent_spawn { "type": "${type}", "count": ${workerGroups[type].length} }`).join('\n')}
    mcp__claude-flow__memory_store { "key": "hive/objective", "value": "${objective}" }
    mcp__claude-flow__memory_store { "key": "hive/queen", "value": "${queenType}" }
    mcp__claude-flow__swarm_think { "topic": "initial_strategy" }
-   TodoWrite { "todos": [/* Create 5-10 high-level tasks */] }
+   
+   Step 2: REQUIRED - Spawn ACTUAL Agents with Claude Code's Task Tool (Single Message):
+   [Claude Code Task Tool - CONCURRENT Agent Execution]:
+   ${workerTypes.map((type) => `   Task("${type.charAt(0).toUpperCase() + type.slice(1)} Agent", "You are a ${type} in the hive. Coordinate via hooks. ${getWorkerTypeInstructions(type).split('\n')[0]}", "${type}")`).join('\n')}
+   
+   Step 3: Batch ALL Todos Together (Single TodoWrite Call):
+   TodoWrite { "todos": [
+     { "id": "1", "content": "Initialize hive mind collective", "status": "in_progress", "priority": "high" },
+     { "id": "2", "content": "Establish consensus protocols", "status": "pending", "priority": "high" },
+     { "id": "3", "content": "Distribute initial tasks to workers", "status": "pending", "priority": "high" },
+     { "id": "4", "content": "Set up collective memory", "status": "pending", "priority": "high" },
+     { "id": "5", "content": "Monitor worker health", "status": "pending", "priority": "medium" },
+     { "id": "6", "content": "Aggregate worker outputs", "status": "pending", "priority": "medium" },
+     { "id": "7", "content": "Learn from patterns", "status": "pending", "priority": "low" },
+     { "id": "8", "content": "Optimize performance", "status": "pending", "priority": "low" }
+   ] }
 
 2. **ESTABLISH COLLECTIVE INTELLIGENCE**:
    - Use consensus_vote for major decisions
@@ -2322,12 +2377,30 @@ For the objective: "${objective}"
 5. Aggregate and synthesize all worker outputs
 6. Deliver comprehensive solution with consensus
 
-⚡ PARALLEL EXECUTION REMINDER:
-The Hive Mind operates with massive parallelism. Always batch operations:
-- Spawn ALL workers in one message
-- Create ALL initial tasks together
+⚡ CRITICAL: CONCURRENT EXECUTION WITH CLAUDE CODE'S TASK TOOL:
+
+The Hive Mind MUST use Claude Code's Task tool for actual agent execution:
+
+✅ CORRECT Pattern:
+[Single Message - All Agents Spawned Concurrently]:
+  Task("Researcher", "Research patterns and best practices...", "researcher")
+  Task("Coder", "Implement core features...", "coder")
+  Task("Tester", "Create comprehensive tests...", "tester")
+  Task("Analyst", "Analyze performance metrics...", "analyst")
+  TodoWrite { todos: [8-10 todos ALL in ONE call] }
+
+❌ WRONG Pattern:
+Message 1: Task("agent1", ...)
+Message 2: Task("agent2", ...)
+Message 3: TodoWrite { single todo }
+// This breaks parallel coordination!
+
+Remember:
+- Use Claude Code's Task tool to spawn ALL agents in ONE message
+- MCP tools are ONLY for coordination setup, not agent execution
+- Batch ALL TodoWrite operations (5-10+ todos minimum)
+- Execute ALL file operations concurrently
 - Store multiple memories simultaneously
-- Check all statuses in parallel
 
 🚀 BEGIN HIVE MIND EXECUTION:
 

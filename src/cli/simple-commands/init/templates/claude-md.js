@@ -36,6 +36,57 @@ If ANY answer is "No", you MUST combine operations into a single message!
 - Follow project conventions
 - Run typecheck before committing
 
+## 🌐 Flow Nexus Cloud Platform
+
+Flow Nexus extends Claude Flow with cloud-powered features:
+
+### Quick Start
+1. **Register**: \`mcp__flow-nexus__user_register\` with email/password
+2. **Login**: \`mcp__flow-nexus__user_login\` to access features
+3. **Check Balance**: \`mcp__flow-nexus__check_balance\` for credits
+
+### Key Capabilities
+
+**🤖 AI Swarms**
+- Deploy multi-agent swarms in cloud sandboxes
+- Pre-built templates for common architectures
+- Auto-scaling and load balancing
+
+**📦 E2B Sandboxes**
+- \`mcp__flow-nexus__sandbox_create\` - Isolated execution environments
+- Support for Node.js, Python, React, Next.js
+- Real-time code execution with environment variables
+
+**⚡ Workflows**
+- \`mcp__flow-nexus__workflow_create\` - Event-driven automation
+- Parallel task processing with message queues
+- Reusable workflow templates
+
+**🎯 Challenges & Learning**
+- \`mcp__flow-nexus__challenges_list\` - Coding challenges
+- Earn rUv credits by completing tasks
+- Global leaderboard and achievements
+
+**🧠 Neural Networks**
+- \`mcp__flow-nexus__neural_train\` - Train custom models
+- Distributed training across sandboxes
+- Pre-built templates for ML tasks
+
+**💰 Credits & Billing**
+- Pay-as-you-go with rUv credits
+- Auto-refill configuration available
+- Free tier for getting started
+
+### Example: Deploy a Swarm
+\`\`\`javascript
+// Login and deploy
+mcp__flow-nexus__user_login { email: "user@example.com", password: "***" }
+mcp__flow-nexus__swarm_init { topology: "mesh", maxAgents: 5 }
+mcp__flow-nexus__sandbox_create { template: "node", name: "api-dev" }
+\`\`\`
+
+Learn more: https://github.com/ruvnet/claude-flow#flow-nexus
+
 ## Project Info
 This is a Claude-Flow AI agent orchestration system.
 `;
@@ -141,6 +192,57 @@ This is a Claude-Flow AI agent orchestration system with the following component
 - Use \`./claude-flow status\` to check system health
 - Monitor with \`./claude-flow monitor\` for real-time updates
 - Verbose output available with \`--verbose\` flag on most commands
+
+## 🌐 Flow Nexus Cloud Platform
+
+Flow Nexus extends Claude Flow with cloud-powered features:
+
+### Quick Start
+1. **Register**: \`mcp__flow-nexus__user_register\` with email/password
+2. **Login**: \`mcp__flow-nexus__user_login\` to access features
+3. **Check Balance**: \`mcp__flow-nexus__check_balance\` for credits
+
+### Key Capabilities
+
+**🤖 AI Swarms**
+- Deploy multi-agent swarms in cloud sandboxes
+- Pre-built templates for common architectures
+- Auto-scaling and load balancing
+
+**📦 E2B Sandboxes**
+- \`mcp__flow-nexus__sandbox_create\` - Isolated execution environments
+- Support for Node.js, Python, React, Next.js
+- Real-time code execution with environment variables
+
+**⚡ Workflows**
+- \`mcp__flow-nexus__workflow_create\` - Event-driven automation
+- Parallel task processing with message queues
+- Reusable workflow templates
+
+**🎯 Challenges & Learning**
+- \`mcp__flow-nexus__challenges_list\` - Coding challenges
+- Earn rUv credits by completing tasks
+- Global leaderboard and achievements
+
+**🧠 Neural Networks**
+- \`mcp__flow-nexus__neural_train\` - Train custom models
+- Distributed training across sandboxes
+- Pre-built templates for ML tasks
+
+**💰 Credits & Billing**
+- Pay-as-you-go with rUv credits
+- Auto-refill configuration available
+- Free tier for getting started
+
+### Example: Deploy a Swarm
+\`\`\`javascript
+// Login and deploy
+mcp__flow-nexus__user_login { email: "user@example.com", password: "***" }
+mcp__flow-nexus__swarm_init { topology: "mesh", maxAgents: 5 }
+mcp__flow-nexus__sandbox_create { template: "node", name: "api-dev" }
+\`\`\`
+
+Learn more: https://github.com/ruvnet/claude-flow#flow-nexus
 `;
 }
 
@@ -466,6 +568,57 @@ This SPARC-enabled project follows a systematic development approach:
 - Claude Code slash commands provide quick access to SPARC modes
 
 For more information about SPARC methodology, see: https://github.com/ruvnet/claude-code-flow/docs/sparc.md
+
+## 🌐 Flow Nexus Cloud Platform
+
+Flow Nexus extends Claude Flow with cloud-powered features:
+
+### Quick Start
+1. **Register**: \`mcp__flow-nexus__user_register\` with email/password
+2. **Login**: \`mcp__flow-nexus__user_login\` to access features
+3. **Check Balance**: \`mcp__flow-nexus__check_balance\` for credits
+
+### Key Capabilities
+
+**🤖 AI Swarms**
+- Deploy multi-agent swarms in cloud sandboxes
+- Pre-built templates for common architectures
+- Auto-scaling and load balancing
+
+**📦 E2B Sandboxes**
+- \`mcp__flow-nexus__sandbox_create\` - Isolated execution environments
+- Support for Node.js, Python, React, Next.js
+- Real-time code execution with environment variables
+
+**⚡ Workflows**
+- \`mcp__flow-nexus__workflow_create\` - Event-driven automation
+- Parallel task processing with message queues
+- Reusable workflow templates
+
+**🎯 Challenges & Learning**
+- \`mcp__flow-nexus__challenges_list\` - Coding challenges
+- Earn rUv credits by completing tasks
+- Global leaderboard and achievements
+
+**🧠 Neural Networks**
+- \`mcp__flow-nexus__neural_train\` - Train custom models
+- Distributed training across sandboxes
+- Pre-built templates for ML tasks
+
+**💰 Credits & Billing**
+- Pay-as-you-go with rUv credits
+- Auto-refill configuration available
+- Free tier for getting started
+
+### Example: Deploy a Swarm
+\`\`\`javascript
+// Login and deploy
+mcp__flow-nexus__user_login { email: "user@example.com", password: "***" }
+mcp__flow-nexus__swarm_init { topology: "mesh", maxAgents: 5 }
+mcp__flow-nexus__sandbox_create { template: "node", name: "api-dev" }
+\`\`\`
+
+Learn more: https://github.com/ruvnet/claude-flow#flow-nexus
 `;
 }
 
@@ -479,15 +632,34 @@ export function createOptimizedSparcClaudeMd() {
 1. ALL operations MUST be concurrent/parallel in a single message
 2. **NEVER save working files, text/mds and tests to the root folder**
 3. ALWAYS organize files in appropriate subdirectories
+4. **USE CLAUDE CODE'S TASK TOOL** for spawning agents concurrently, not just MCP
 
 ### ⚡ GOLDEN RULE: "1 MESSAGE = ALL RELATED OPERATIONS"
 
 **MANDATORY PATTERNS:**
 - **TodoWrite**: ALWAYS batch ALL todos in ONE call (5-10+ todos minimum)
-- **Task tool**: ALWAYS spawn ALL agents in ONE message with full instructions
+- **Task tool (Claude Code)**: ALWAYS spawn ALL agents in ONE message with full instructions
 - **File operations**: ALWAYS batch ALL reads/writes/edits in ONE message
 - **Bash commands**: ALWAYS batch ALL terminal operations in ONE message
 - **Memory operations**: ALWAYS batch ALL memory store/retrieve in ONE message
+
+### 🎯 CRITICAL: Claude Code Task Tool for Agent Execution
+
+**Claude Code's Task tool is the PRIMARY way to spawn agents:**
+\`\`\`javascript
+// ✅ CORRECT: Use Claude Code's Task tool for parallel agent execution
+[Single Message]:
+  Task("Research agent", "Analyze requirements and patterns...", "researcher")
+  Task("Coder agent", "Implement core features...", "coder")
+  Task("Tester agent", "Create comprehensive tests...", "tester")
+  Task("Reviewer agent", "Review code quality...", "reviewer")
+  Task("Architect agent", "Design system architecture...", "system-architect")
+\`\`\`
+
+**MCP tools are ONLY for coordination setup:**
+- \`mcp__claude-flow__swarm_init\` - Initialize coordination topology
+- \`mcp__claude-flow__agent_spawn\` - Define agent types for coordination
+- \`mcp__claude-flow__task_orchestrate\` - Orchestrate high-level workflows
 
 ### 📁 File Organization Rules
 
@@ -569,7 +741,8 @@ This project uses SPARC (Specification, Pseudocode, Architecture, Refinement, Co
 
 ## 🎯 Claude Code vs MCP Tools
 
-### Claude Code Handles ALL:
+### Claude Code Handles ALL EXECUTION:
+- **Task tool**: Spawn and run agents concurrently for actual work
 - File operations (Read, Write, Edit, MultiEdit, Glob, Grep)
 - Code generation and programming
 - Bash commands and system operations
@@ -580,21 +753,24 @@ This project uses SPARC (Specification, Pseudocode, Architecture, Refinement, Co
 - Package management
 - Testing and debugging
 
-### MCP Tools ONLY:
-- Coordination and planning
+### MCP Tools ONLY COORDINATE:
+- Swarm initialization (topology setup)
+- Agent type definitions (coordination patterns)
+- Task orchestration (high-level planning)
 - Memory management
 - Neural features
 - Performance tracking
-- Swarm orchestration
 - GitHub integration
 
-**KEY**: MCP coordinates, Claude Code executes.
+**KEY**: MCP coordinates the strategy, Claude Code's Task tool executes with real agents.
 
 ## 🚀 Quick Setup
 
 \`\`\`bash
-# Add Claude Flow MCP server
+# Add MCP servers (Claude Flow required, others optional)
 claude mcp add claude-flow npx claude-flow@alpha mcp start
+claude mcp add ruv-swarm npx ruv-swarm mcp start  # Optional: Enhanced coordination
+claude mcp add flow-nexus npx flow-nexus@latest mcp start  # Optional: Cloud features
 \`\`\`
 
 ## MCP Tool Categories
@@ -614,9 +790,56 @@ claude mcp add claude-flow npx claude-flow@alpha mcp start
 ### System
 \`benchmark_run\`, \`features_detect\`, \`swarm_monitor\`
 
+### Flow-Nexus MCP Tools (Optional Advanced Features)
+Flow-Nexus extends MCP capabilities with 70+ cloud-based orchestration tools:
+
+**Key MCP Tool Categories:**
+- **Swarm & Agents**: \`swarm_init\`, \`swarm_scale\`, \`agent_spawn\`, \`task_orchestrate\`
+- **Sandboxes**: \`sandbox_create\`, \`sandbox_execute\`, \`sandbox_upload\` (cloud execution)
+- **Templates**: \`template_list\`, \`template_deploy\` (pre-built project templates)
+- **Neural AI**: \`neural_train\`, \`neural_patterns\`, \`seraphina_chat\` (AI assistant)
+- **GitHub**: \`github_repo_analyze\`, \`github_pr_manage\` (repository management)
+- **Real-time**: \`execution_stream_subscribe\`, \`realtime_subscribe\` (live monitoring)
+- **Storage**: \`storage_upload\`, \`storage_list\` (cloud file management)
+
+**Authentication Required:**
+- Register: \`mcp__flow-nexus__user_register\` or \`npx flow-nexus@latest register\`
+- Login: \`mcp__flow-nexus__user_login\` or \`npx flow-nexus@latest login\`
+- Access 70+ specialized MCP tools for advanced orchestration
+
+## 🚀 Agent Execution Flow with Claude Code
+
+### The Correct Pattern:
+
+1. **Optional**: Use MCP tools to set up coordination topology
+2. **REQUIRED**: Use Claude Code's Task tool to spawn agents that do actual work
+3. **REQUIRED**: Each agent runs hooks for coordination
+4. **REQUIRED**: Batch all operations in single messages
+
+### Example Full-Stack Development:
+
+\`\`\`javascript
+// Single message with all agent spawning via Claude Code's Task tool
+[Parallel Agent Execution]:
+  Task("Backend Developer", "Build REST API with Express. Use hooks for coordination.", "backend-dev")
+  Task("Frontend Developer", "Create React UI. Coordinate with backend via memory.", "coder")
+  Task("Database Architect", "Design PostgreSQL schema. Store schema in memory.", "code-analyzer")
+  Task("Test Engineer", "Write Jest tests. Check memory for API contracts.", "tester")
+  Task("DevOps Engineer", "Setup Docker and CI/CD. Document in memory.", "cicd-engineer")
+  Task("Security Auditor", "Review authentication. Report findings via hooks.", "reviewer")
+  
+  // All todos batched together
+  TodoWrite { todos: [...8-10 todos...] }
+  
+  // All file operations together
+  Write "backend/server.js"
+  Write "frontend/App.jsx"
+  Write "database/schema.sql"
+\`\`\`
+
 ## 📋 Agent Coordination Protocol
 
-### Every Agent MUST:
+### Every Agent Spawned via Task Tool MUST:
 
 **1️⃣ BEFORE Work:**
 \`\`\`bash
@@ -638,34 +861,43 @@ npx claude-flow@alpha hooks session-end --export-metrics true
 
 ## 🎯 Concurrent Execution Examples
 
-### ✅ CORRECT (Single Message):
+### ✅ CORRECT WORKFLOW: MCP Coordinates, Claude Code Executes
+
 \`\`\`javascript
-[BatchTool]:
-  // Initialize swarm
+// Step 1: MCP tools set up coordination (optional, for complex tasks)
+[Single Message - Coordination Setup]:
   mcp__claude-flow__swarm_init { topology: "mesh", maxAgents: 6 }
   mcp__claude-flow__agent_spawn { type: "researcher" }
   mcp__claude-flow__agent_spawn { type: "coder" }
   mcp__claude-flow__agent_spawn { type: "tester" }
+
+// Step 2: Claude Code Task tool spawns ACTUAL agents that do the work
+[Single Message - Parallel Agent Execution]:
+  // Claude Code's Task tool spawns real agents concurrently
+  Task("Research agent", "Analyze API requirements and best practices. Check memory for prior decisions.", "researcher")
+  Task("Coder agent", "Implement REST endpoints with authentication. Coordinate via hooks.", "coder")
+  Task("Database agent", "Design and implement database schema. Store decisions in memory.", "code-analyzer")
+  Task("Tester agent", "Create comprehensive test suite with 90% coverage.", "tester")
+  Task("Reviewer agent", "Review code quality and security. Document findings.", "reviewer")
   
-  // Spawn agents with Task tool
-  Task("Research agent: Analyze requirements...")
-  Task("Coder agent: Implement features...")
-  Task("Tester agent: Create test suite...")
-  
-  // Batch todos
+  // Batch ALL todos in ONE call
   TodoWrite { todos: [
-    {id: "1", content: "Research", status: "in_progress", priority: "high"},
-    {id: "2", content: "Design", status: "pending", priority: "high"},
-    {id: "3", content: "Implement", status: "pending", priority: "high"},
-    {id: "4", content: "Test", status: "pending", priority: "medium"},
-    {id: "5", content: "Document", status: "pending", priority: "low"}
+    {id: "1", content: "Research API patterns", status: "in_progress", priority: "high"},
+    {id: "2", content: "Design database schema", status: "in_progress", priority: "high"},
+    {id: "3", content: "Implement authentication", status: "pending", priority: "high"},
+    {id: "4", content: "Build REST endpoints", status: "pending", priority: "high"},
+    {id: "5", content: "Write unit tests", status: "pending", priority: "medium"},
+    {id: "6", content: "Integration tests", status: "pending", priority: "medium"},
+    {id: "7", content: "API documentation", status: "pending", priority: "low"},
+    {id: "8", content: "Performance optimization", status: "pending", priority: "low"}
   ]}
   
-  // File operations
-  Bash "mkdir -p app/{src,tests,docs}"
-  Write "app/src/index.js"
-  Write "app/tests/index.test.js"
-  Write "app/docs/README.md"
+  // Parallel file operations
+  Bash "mkdir -p app/{src,tests,docs,config}"
+  Write "app/package.json"
+  Write "app/src/server.js"
+  Write "app/tests/server.test.js"
+  Write "app/docs/API.md"
 \`\`\`
 
 ### ❌ WRONG (Multiple Messages):
@@ -732,6 +964,7 @@ Message 4: Write "file.js"
 
 - Documentation: https://github.com/ruvnet/claude-flow
 - Issues: https://github.com/ruvnet/claude-flow/issues
+- Flow-Nexus Platform: https://flow-nexus.ruv.io (registration required for cloud features)
 
 ---
 
@@ -743,5 +976,126 @@ NEVER create files unless they're absolutely necessary for achieving your goal.
 ALWAYS prefer editing an existing file to creating a new one.
 NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
 Never save working files, text/mds and tests to the root folder.
+`;
+}
+
+export function createFlowNexusClaudeMd() {
+  return `# Claude Code Configuration - Flow Nexus Integration
+
+## 🌐 Flow Nexus Cloud Platform
+
+Flow Nexus extends Claude Flow with cloud-powered features for AI development and deployment.
+
+### Quick Start
+1. **Register**: Use \`mcp__flow-nexus__user_register\` with email/password
+2. **Login**: Use \`mcp__flow-nexus__user_login\` to access features
+3. **Check Balance**: Use \`mcp__flow-nexus__check_balance\` for credits
+
+### 🚀 Key Capabilities
+
+**🤖 AI Swarms**
+- Deploy multi-agent swarms in cloud sandboxes
+- Pre-built templates for common architectures
+- Auto-scaling and load balancing
+
+**📦 E2B Sandboxes**
+- \`mcp__flow-nexus__sandbox_create\` - Isolated execution environments
+- Support for Node.js, Python, React, Next.js
+- Real-time code execution with environment variables
+
+**⚡ Workflows**
+- \`mcp__flow-nexus__workflow_create\` - Event-driven automation
+- Parallel task processing with message queues
+- Reusable workflow templates
+
+**🎯 Challenges & Learning**
+- \`mcp__flow-nexus__challenges_list\` - Coding challenges
+- Earn rUv credits by completing tasks
+- Global leaderboard and achievements
+
+**🧠 Neural Networks**
+- \`mcp__flow-nexus__neural_train\` - Train custom models
+- Distributed training across sandboxes
+- Pre-built templates for ML tasks
+
+**💰 Credits & Billing**
+- Pay-as-you-go with rUv credits
+- Auto-refill configuration available
+- Free tier for getting started
+
+### 🤖 Flow Nexus Agents
+
+Specialized agents for Flow Nexus operations available in \`.claude/agents/flow-nexus/\`:
+
+- **flow-nexus-auth**: Authentication and user management
+- **flow-nexus-sandbox**: E2B sandbox deployment and management  
+- **flow-nexus-swarm**: AI swarm orchestration and scaling
+- **flow-nexus-workflow**: Event-driven workflow automation
+- **flow-nexus-neural**: Neural network training and deployment
+- **flow-nexus-challenges**: Coding challenges and gamification
+- **flow-nexus-app-store**: Application marketplace management
+- **flow-nexus-payments**: Credit management and billing
+- **flow-nexus-user-tools**: User management and system utilities
+
+### 📁 Flow Nexus Commands
+
+Detailed Flow Nexus command documentation available in \`.claude/commands/flow-nexus/\`:
+
+- \`login-registration.md\` - Authentication workflows
+- \`sandbox.md\` - E2B sandbox management
+- \`swarm.md\` - AI swarm deployment
+- \`workflow.md\` - Automation workflows
+- \`neural-network.md\` - ML model training
+- \`challenges.md\` - Coding challenges
+- \`app-store.md\` - App marketplace
+- \`payments.md\` - Credit and billing
+- \`user-tools.md\` - User utilities
+
+### 💡 Example: Deploy a Swarm
+\`\`\`javascript
+// 1. Login to Flow Nexus
+mcp__flow-nexus__user_login({ 
+  email: "user@example.com", 
+  password: "password" 
+})
+
+// 2. Initialize swarm
+mcp__flow-nexus__swarm_init({ 
+  topology: "mesh", 
+  maxAgents: 5 
+})
+
+// 3. Create sandbox
+mcp__flow-nexus__sandbox_create({ 
+  template: "node", 
+  name: "api-dev" 
+})
+
+// 4. Orchestrate task
+mcp__flow-nexus__task_orchestrate({
+  task: "Build REST API with authentication",
+  strategy: "parallel"
+})
+\`\`\`
+
+### 🔗 Integration with Claude Code
+
+Flow Nexus seamlessly integrates with Claude Code through MCP (Model Context Protocol):
+
+1. **Add MCP Server**: \`claude mcp add flow-nexus npx flow-nexus@latest mcp start\`
+2. **Use in Claude Code**: Access all Flow Nexus tools through MCP interface
+3. **Agent Coordination**: Use Flow Nexus agents for specialized cloud operations
+4. **Command Reference**: Use slash commands for quick Flow Nexus operations
+
+### 📚 Learn More
+
+- Documentation: https://github.com/ruvnet/claude-flow#flow-nexus
+- MCP Integration: Use \`mcp__flow-nexus__*\` tools in Claude Code
+- Agent Usage: Type \`/\` in Claude Code to see Flow Nexus commands
+- Community: Join discussions and share templates
+
+---
+
+**Ready to build with Flow Nexus? Start with authentication and explore the cloud-powered AI development platform!**
 `;
 }
