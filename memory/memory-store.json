@@ -528,5 +528,55 @@
       "namespace": "default",
       "timestamp": 1755362446482
     }
+  ],
+  "swarm_1756475726467_c9ey1p9vm": [
+    {
+      "key": "performance/metrics",
+      "value": "{\"analysis_timestamp\":\"2025-08-29T13:58:07Z\",\"swarm_id\":\"swarm_1756475726467_c9ey1p9vm\",\"topology\":\"hierarchical\",\"agent_count\":0,\"active_agents\":0,\"task_count\":0,\"system_metrics\":{\"memory_usage_percent\":7.85,\"memory_efficiency\":92.15,\"cpu_load\":0.098,\"uptime\":5787,\"platform\":\"linux\"},\"performance_score\":85.7,\"bottlenecks_identified\":[],\"recommendations\":[\"Consider spawning agents for active workloads\",\"Monitor memory growth trend\",\"Implement task distribution strategies\"]}",
+      "namespace": "swarm_1756475726467_c9ey1p9vm",
+      "timestamp": 1756475912632
+    },
+    {
+      "key": "performance/recommendations",
+      "value": "{\"priority\":\"medium\",\"optimization_targets\":[\"agent_utilization\",\"task_distribution\",\"memory_management\"],\"suggested_actions\":[\"Initialize agent pool for faster task execution\",\"Implement load balancing across available resources\",\"Monitor memory usage trends and implement cleanup strategies\"],\"expected_improvements\":{\"agent_spawn_time\":\"40% faster\",\"memory_efficiency\":\"5% improvement\",\"task_throughput\":\"60% increase\"}}",
+      "namespace": "swarm_1756475726467_c9ey1p9vm",
+      "timestamp": 1756475918678
+    },
+    {
+      "key": "docs/architecture",
+      "value": "Claude Flow Swarm Architecture Documentation - Swarm ID: swarm_1756475726467_c9ey1p9vm, Topology: Hierarchical, Agents: 3 active (SwarmLead/Task-Orchestrator, RequirementsAnalyst/Researcher, SystemDesigner/System-Architect)",
+      "namespace": "swarm_1756475726467_c9ey1p9vm",
+      "timestamp": 1756476316552
+    },
+    {
+      "key": "docs/api",
+      "value": "Claude Flow Swarm API - Core endpoints: swarm_init, swarm_status, agent_spawn, agent_list, task_orchestrate, memory_usage, performance_report. CLI: sparc modes, memory commands, hooks system. Authentication: bypass mode.",
+      "namespace": "swarm_1756475726467_c9ey1p9vm",
+      "timestamp": 1756476322626
+    },
+    {
+      "key": "system/health",
+      "value": "System Health: Memory 9.92% used (6.69GB/67.43GB), CPU 16.69% load, 16 cores, Linux platform, 5843s uptime, Performance: 1 task completed successfully (100% success rate)",
+      "namespace": "swarm_1756475726467_c9ey1p9vm",
+      "timestamp": 1756476328721
+    },
+    {
+      "key": "docs/user-guide",
+      "value": "Claude Flow User Guide: 1) Initialize swarm with topology (hierarchical/mesh/ring/star), 2) Spawn agents by type (researcher/coder/analyst/coordinator), 3) Orchestrate tasks with priority/strategy, 4) Monitor progress via status/metrics, 5) Use memory for persistence, 6) Leverage hooks for automation",
+      "namespace": "swarm_1756475726467_c9ey1p9vm",
+      "timestamp": 1756476344458
+    },
+    {
+      "key": "knowledge/best-practices",
+      "value": "Best Practices: Use hierarchical topology for coordination, mesh for peer-to-peer, batch operations in single messages, leverage memory for cross-agent communication, monitor performance metrics, use hooks for task lifecycle, implement error handling and retries",
+      "namespace": "swarm_1756475726467_c9ey1p9vm",
+      "timestamp": 1756476350566
+    },
+    {
+      "key": "swarm/current-status",
+      "value": "Current Status: 3 active agents in hierarchical topology, 100% task success rate, healthy system metrics, recent orchestration activity, ready for new tasks, documentation complete",
+      "namespace": "swarm_1756475726467_c9ey1p9vm",
+      "timestamp": 1756476356669
+    }
   ]
 }

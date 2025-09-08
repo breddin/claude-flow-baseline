@@ -238,14 +238,19 @@ export const HIVE_DB_SCHEMA = {
   sessions: `
     CREATE TABLE IF NOT EXISTS sessions (
       id TEXT PRIMARY KEY,
-      swarm_id TEXT,
+      swarm_id TEXT NOT NULL,
+      swarm_name TEXT NOT NULL,
+      objective TEXT,
       status TEXT DEFAULT 'active',
-      start_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-      end_time DATETIME,
-      total_tasks INTEGER DEFAULT 0,
-      completed_tasks INTEGER DEFAULT 0,
-      success_rate REAL DEFAULT 0.0,
-      metadata TEXT DEFAULT '{}',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      paused_at DATETIME,
+      resumed_at DATETIME,
+      completion_percentage REAL DEFAULT 0,
+      checkpoint_data TEXT,
+      metadata TEXT,
+      parent_pid INTEGER,
+      child_pids TEXT,
       FOREIGN KEY (swarm_id) REFERENCES swarms (id)
     );
   `,

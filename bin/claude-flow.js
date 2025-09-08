@@ -31,12 +31,12 @@ for (const arg of args) {
   if (arg === '--version' || arg === '-v') {
     console.log(`v${VERSION}`);
     console.log('');
-    console.log('⚡ Alpha 90 - Major MCP Implementation & Quality Update');
-    console.log('  • 15+ Real MCP Tools - DAA, Workflow, Performance tools fully implemented');
-    console.log('  • Critical Bug Fixes - agent_metrics, swarm_monitor, neural_train errors resolved');
-    console.log('  • Real WASM Neural Networks - ruv-fann powered actual neural processing');
-    console.log('  • >95% Functionality - Mock rate reduced from 40% to <5%');
-    console.log('  • MCP Routing Fixed - All workflow/performance tools properly routed');
+    console.log('⚡ Alpha 91 - Claude Code Task Tool Integration Update');
+    console.log('  • Enhanced CLAUDE.md - Clear guidance for Task tool concurrent agent execution');
+    console.log('  • Updated Swarm Prompts - Emphasizes Claude Code Task tool for actual work');
+    console.log('  • Improved Hive Mind - Better separation of MCP coordination vs Task execution');
+    console.log('  • Batch Operations - Stronger emphasis on TodoWrite & Task tool batching');
+    console.log('  • Concurrent Patterns - Clear examples of parallel agent spawning');
     console.log('');
     console.log('📚 Docs: https://github.com/ruvnet/claude-flow');
     process.exit(0);

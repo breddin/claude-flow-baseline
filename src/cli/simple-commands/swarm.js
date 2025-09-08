@@ -370,7 +370,13 @@ export async function swarmCommand(args, flags) {
         flags.sparc !== false && (strategy === 'development' || strategy === 'auto');
 
       // Build the complete swarm prompt before checking for claude
-      const swarmPrompt = `You are orchestrating a Claude Flow Swarm with advanced MCP tool coordination.
+      const swarmPrompt = `You are orchestrating a Claude Flow Swarm using Claude Code's Task tool for agent execution.
+
+🚨 CRITICAL INSTRUCTION: Use Claude Code's Task Tool for ALL Agent Spawning!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Claude Code's Task tool = Spawns agents that DO the actual work
+❌ MCP tools = Only for coordination setup, NOT for execution
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🎯 OBJECTIVE: ${objective}
 
@@ -430,35 +436,47 @@ If you need to do X operations, they should be in 1 message, not X messages.
 
 🎯 MANDATORY PATTERNS FOR CLAUDE-FLOW SWARMS:
 
-1️⃣ **SWARM INITIALIZATION** - Everything in ONE BatchTool:
+1️⃣ **SWARM INITIALIZATION** - Use Claude Code's Task Tool for Agents:
+
+Step A: Optional MCP Coordination Setup (Single Message):
 \`\`\`javascript
-[Single Message with Multiple Tools]:
-  // Spawn ALL agents at once
+[MCP Tools - Coordination ONLY]:
+  // Set up coordination topology (OPTIONAL)
+  mcp__claude-flow__swarm_init {"topology": "mesh", "maxAgents": ${maxAgents}}
   mcp__claude-flow__agent_spawn {"type": "coordinator", "name": "SwarmLead"}
-  mcp__claude-flow__agent_spawn {"type": "researcher", "name": "DataAnalyst"}
-  mcp__claude-flow__agent_spawn {"type": "coder", "name": "BackendDev"}
-  mcp__claude-flow__agent_spawn {"type": "coder", "name": "FrontendDev"}
-  mcp__claude-flow__agent_spawn {"type": "tester", "name": "QAEngineer"}
-  
-  // Initialize ALL memory keys
   mcp__claude-flow__memory_store {"key": "swarm/objective", "value": "${objective}"}
-  mcp__claude-flow__memory_store {"key": "swarm/config", "value": {"strategy": "${strategy}", "mode": "${mode}"}}
+  mcp__claude-flow__memory_store {"key": "swarm/config", "value": {"strategy": "${strategy}"}}
+\`\`\`
+
+Step B: REQUIRED - Claude Code Task Tool for ACTUAL Agent Execution (Single Message):
+\`\`\`javascript
+[Claude Code Task Tool - CONCURRENT Agent Spawning]:
+  // Spawn ALL agents using Task tool in ONE message
+  Task("Coordinator", "Lead swarm coordination. Use hooks for memory sharing.", "coordinator")
+  Task("Researcher", "Analyze requirements and patterns. Coordinate via hooks.", "researcher")
+  Task("Backend Dev", "Implement server-side features. Share progress via hooks.", "coder")
+  Task("Frontend Dev", "Build UI components. Sync with backend via memory.", "coder")
+  Task("QA Engineer", "Create and run tests. Report findings via hooks.", "tester")
   
-  // Create task hierarchy
-  mcp__claude-flow__task_create {"name": "${objective}", "type": "parent", "id": "main"}
-  mcp__claude-flow__task_create {"name": "Research Phase", "parent": "main"}
-  mcp__claude-flow__task_create {"name": "Design Phase", "parent": "main"}
-  mcp__claude-flow__task_create {"name": "Implementation", "parent": "main"}
-  
-  // Initialize comprehensive todo list
+  // Batch ALL todos in ONE TodoWrite call (5-10+ todos)
   TodoWrite {"todos": [
     {"id": "1", "content": "Initialize ${maxAgents} agent swarm", "status": "completed", "priority": "high"},
     {"id": "2", "content": "Analyze: ${objective}", "status": "in_progress", "priority": "high"},
     {"id": "3", "content": "Design architecture", "status": "pending", "priority": "high"},
-    {"id": "4", "content": "Implement solution", "status": "pending", "priority": "high"},
-    {"id": "5", "content": "Test and validate", "status": "pending", "priority": "medium"}
+    {"id": "4", "content": "Implement backend", "status": "pending", "priority": "high"},
+    {"id": "5", "content": "Implement frontend", "status": "pending", "priority": "high"},
+    {"id": "6", "content": "Write unit tests", "status": "pending", "priority": "medium"},
+    {"id": "7", "content": "Integration testing", "status": "pending", "priority": "medium"},
+    {"id": "8", "content": "Performance optimization", "status": "pending", "priority": "low"},
+    {"id": "9", "content": "Documentation", "status": "pending", "priority": "low"}
   ]}
 \`\`\`
+
+⚠️ CRITICAL: Claude Code's Task tool does the ACTUAL work!
+- MCP tools = Coordination setup only
+- Task tool = Spawns agents that execute real work
+- ALL agents MUST be spawned in ONE message
+- ALL todos MUST be batched in ONE TodoWrite call
 
 2️⃣ **TASK COORDINATION** - Batch ALL assignments:
 \`\`\`javascript
