@@ -54,6 +54,74 @@ async function getConfigManager(): Promise<ConfigManager> {
 }
 
 export function setupCommands(cli: CLI): void {
+  // Neural init command
+  cli.command({
+    name: 'neural',
+    description: 'Neural module management',
+    subcommands: [
+      {
+        name: 'init',
+        description: 'Initialize SAFLA neural module',
+        options: [
+          {
+            name: 'force',
+            short: 'f',
+            description: 'Overwrite existing module',
+            type: 'boolean',
+          },
+          {
+            name: 'target',
+            short: 't',
+            description: 'Target directory',
+            type: 'string',
+            defaultValue: '.claude/agents/neural',
+          },
+        ],
+        action: async (ctx: CommandContext) => {
+          const { initNeuralModule } = await import('../../scripts/init-neural.js');
+          await initNeuralModule({
+            force: ctx.flags.force as boolean,
+            targetDir: ctx.flags.target as string,
+          });
+        },
+      },
+    ],
+  });
+
+  // Goal init command
+  cli.command({
+    name: 'goal',
+    description: 'Goal module management',
+    subcommands: [
+      {
+        name: 'init',
+        description: 'Initialize GOAP goal module',
+        options: [
+          {
+            name: 'force',
+            short: 'f',
+            description: 'Overwrite existing module',
+            type: 'boolean',
+          },
+          {
+            name: 'target',
+            short: 't',
+            description: 'Target directory',
+            type: 'string',
+            defaultValue: '.claude/agents/goal',
+          },
+        ],
+        action: async (ctx: CommandContext) => {
+          const { initGoalModule } = await import('../../scripts/init-goal.js');
+          await initGoalModule({
+            force: ctx.flags.force as boolean,
+            targetDir: ctx.flags.target as string,
+          });
+        },
+      },
+    ],
+  });
+
   // Init command
   cli.command({
     name: 'init',

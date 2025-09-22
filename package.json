@@ -1,7 +1,8 @@
 {
   "name": "claude-flow",
-  "version": "2.0.0-alpha.103",
+  "version": "2.0.0-alpha.110",
   "description": "Enterprise-grade AI agent orchestration with ruv-swarm integration (Alpha Release)",
+  "mcpName": "io.github.ruvnet/claude-flow",
   "main": "cli.mjs",
   "bin": {
     "claude-flow": "bin/claude-flow.js"
@@ -9,6 +10,8 @@
   "scripts": {
     "preinstall": "node -e \"if(process.platform === 'win32' && process.env.npm_config_user_agent && process.env.npm_config_user_agent.includes('npm')) { console.warn('⚠️  Warning: On Windows, it is recommended to use pnpm to install this package to avoid potential native dependency build issues.'); console.warn('💡 Try: pnpm install or pnpx claude-flow@alpha'); }\"",
     "dev": "tsx src/cli/main.ts",
+    "init:neural": "node scripts/init-neural.js",
+    "init:goal": "node scripts/init-goal.js",
     "build": "npm run clean && npm run update-version && npm run build:esm && npm run build:cjs && npm run build:binary",
     "update-version": "node scripts/update-bin-version.js",
     "clean": "rm -rf dist dist-cjs",

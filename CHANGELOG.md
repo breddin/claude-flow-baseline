@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-alpha.110] - 2025-09-18
+
+> **🧠 Neural & Goal Modules Simplified**: Streamlined `neural init` and `goal init` commands to create only essential agent files. Updated wiki documentation with new AI Modules section.
+
+### ✨ Changed
+
+#### 🎯 Simplified Module Initialization
+- **Neural Module**: `npx claude-flow@alpha neural init` now creates only the essential `safla-neural.md` agent file
+  - Removed unnecessary `config.json` generation
+  - Removed unnecessary `README.md` generation
+  - Cleaner, simpler initialization focused on the agent definition
+
+- **Goal Module**: `npx claude-flow@alpha goal init` now creates only the essential `goal-planner.md` agent file
+  - Removed unnecessary `config.json` generation
+  - Removed unnecessary `README.md` generation
+  - Streamlined initialization for immediate use
+
+#### 📚 Wiki Documentation Updates
+- **New AI Modules Section**: Added dedicated section in wiki navigation for Neural and Goal modules
+- **Updated Neural Module Docs**: Removed references to config.json and README.md files
+- **Updated Goal Module Docs**: Removed references to config.json and README.md files
+- **Clearer Instructions**: Simplified documentation to reflect the streamlined initialization process
+
+### 🔧 Technical Details
+- Both commands now create only the agent markdown file in `.claude/agents/[module]/`
+- Configuration is built into the agent definitions themselves
+- Reduced file clutter while maintaining full functionality
+
 ## [2.0.0-alpha.91] - 2025-08-21
 
 > **🚀 Claude Code Task Tool Integration Update**: Enhanced integration with Claude Code's Task tool for concurrent agent execution. Clear separation between MCP coordination tools and Claude Code's execution capabilities, with comprehensive documentation and examples for parallel agent spawning.
