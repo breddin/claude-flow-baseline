@@ -23,6 +23,8 @@ import { hookSafetyCommand } from './simple-commands/hook-safety.js';
 import { hiveMindCommand } from './simple-commands/hive-mind.js';
 import { HelpFormatter } from './help-formatter.js';
 import hiveMindOptimizeCommand from './simple-commands/hive-mind-optimize.js';
+import { neuralCommand } from './simple-commands/neural.js';
+import { goalCommand } from './simple-commands/goal.js';
 import {
   showUnifiedMetrics,
   fixTaskAttribution,
@@ -613,6 +615,44 @@ Target metrics:
   • <10% human intervention rate
   • >90% integration success rate
   • <5% automated rollback frequency`,
+  });
+
+  commandRegistry.set('neural', {
+    handler: neuralCommand,
+    description: '🧠 Neural module commands for SAFLA self-learning systems',
+    usage: 'neural <command> [options]',
+    examples: [
+      'neural init                      # Initialize neural module',
+      'neural init --force              # Force overwrite existing',
+      'neural init --target ./agents    # Custom location',
+    ],
+    details: `
+Neural Module Features:
+  • Self-Aware Feedback Loop Algorithm (SAFLA)
+  • 4-tier memory system (Vector, Episodic, Semantic, Working)
+  • 172,000+ ops/sec processing with WASM optimization
+  • 60% memory compression while maintaining recall
+  • Cross-session learning and persistence
+  • Distributed neural training with MCP integration`,
+  });
+
+  commandRegistry.set('goal', {
+    handler: goalCommand,
+    description: '🎯 Goal module commands for GOAP intelligent planning',
+    usage: 'goal <command> [options]',
+    examples: [
+      'goal init                        # Initialize goal module',
+      'goal init --force                # Force overwrite existing',
+      'goal init --target ./agents      # Custom location',
+    ],
+    details: `
+Goal Module Features:
+  • Goal-Oriented Action Planning (GOAP) algorithm
+  • A* pathfinding for optimal plan generation
+  • OODA loop execution monitoring
+  • Adaptive replanning on failures
+  • Mixed LLM + code execution
+  • Cost-optimized action sequences`,
   });
 
   commandRegistry.set('pair', {
