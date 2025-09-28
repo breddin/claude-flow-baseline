@@ -31,12 +31,12 @@ for (const arg of args) {
   if (arg === '--version' || arg === '-v') {
     console.log(`v${VERSION}`);
     console.log('');
-    console.log('⚡ Alpha 91 - Claude Code Task Tool Integration Update');
-    console.log('  • Enhanced CLAUDE.md - Clear guidance for Task tool concurrent agent execution');
-    console.log('  • Updated Swarm Prompts - Emphasizes Claude Code Task tool for actual work');
-    console.log('  • Improved Hive Mind - Better separation of MCP coordination vs Task execution');
-    console.log('  • Batch Operations - Stronger emphasis on TodoWrite & Task tool batching');
-    console.log('  • Concurrent Patterns - Clear examples of parallel agent spawning');
+    console.log('⚡ Alpha 128 - Build Optimization & Memory Coordination');
+    console.log('  • Build System Fixed - Removed 32 UI files, clean compilation');
+    console.log('  • Memory Coordination Validated - MCP tools fully operational');
+    console.log('  • Agent Updates - All core agents with MCP tool integration');
+    console.log('  • Hive-Mind Agents - 5 new agents with memory coordination');
+    console.log('  • Command System - All CLI commands tested and working');
     console.log('');
     console.log('📚 Docs: https://github.com/ruvnet/claude-flow');
     process.exit(0);

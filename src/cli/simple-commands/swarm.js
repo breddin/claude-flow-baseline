@@ -4,7 +4,7 @@
 
 import { args, mkdirAsync, writeTextFile, exit, cwd } from '../node-compat.js';
 import { spawn, execSync } from 'child_process';
-import { existsSync, chmodSync, statSync } from 'fs';
+import { existsSync, chmodSync, statSync, readFileSync } from 'fs';
 import { open } from 'fs/promises';
 import process from 'process';
 import path from 'path';
@@ -29,9 +29,17 @@ function isHeadlessEnvironment() {
   const isCI = ciEnvironments.some(env => process.env[env]);
   
   // Check if running in Docker
-  const isDocker = existsSync('/.dockerenv') || 
-    (existsSync('/proc/1/cgroup') && 
-     require('fs').readFileSync('/proc/1/cgroup', 'utf8').includes('docker'));
+  let isDocker = existsSync('/.dockerenv');
+  
+  // Additional Docker check for cgroup
+  if (!isDocker && existsSync('/proc/1/cgroup')) {
+    try {
+      const cgroupContent = readFileSync('/proc/1/cgroup', 'utf8');
+      isDocker = cgroupContent.includes('docker');
+    } catch {
+      // Ignore read errors
+    }
+  }
   
   // Check TTY availability
   const hasTTY = process.stdin.isTTY && process.stdout.isTTY;
@@ -786,6 +794,18 @@ The swarm should be self-documenting - use memory_store to save all important in
 
       // If --claude flag is used, force Claude Code even if CLI not available
       if (flags && flags.claude) {
+        // Inject memory coordination protocol into CLAUDE.md
+        try {
+          const { injectMemoryProtocol, enhanceSwarmPrompt } = await import('./inject-memory-protocol.js');
+          await injectMemoryProtocol();
+          
+          // Enhance the prompt with memory coordination instructions
+          swarmPrompt = enhanceSwarmPrompt(swarmPrompt, maxAgents);
+        } catch (err) {
+          // If injection module not available, continue with original prompt
+          console.log('⚠️  Memory protocol injection not available, using standard prompt');
+        }
+        
         // --claude flag means interactive mode, so don't apply non-interactive
         console.log('🐝 Launching Claude Flow Swarm System...');
         console.log(`📋 Objective: ${objective}`);
@@ -794,6 +814,7 @@ The swarm should be self-documenting - use memory_store to save all important in
         console.log(`🤖 Max Agents: ${maxAgents}\n`);
         
         console.log('🚀 Launching Claude Code with Swarm Coordination');
+        console.log('📝 Memory protocol injected into CLAUDE.md');
         console.log('─'.repeat(60));
         
         // Build arguments properly: for interactive mode, prompt can be first
@@ -805,7 +826,7 @@ The swarm should be self-documenting - use memory_store to save all important in
           console.log('🔓 Using --dangerously-skip-permissions by default for seamless swarm execution');
         }
         
-        // Add the prompt (for interactive mode, position doesn't matter as much)
+        // Add the enhanced prompt
         claudeArgs.push(swarmPrompt);
         
         // --claude flag means interactive mode, so don't add non-interactive flags
