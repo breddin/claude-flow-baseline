@@ -5,6 +5,8 @@ import { mkdir, writeFile, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { ClaudeAPIClient } from '../api/claude-client.js';
 import { ConfigManager } from '../config/config-manager.js';
+import { ParallelSwarmExecutor } from '../sdk/session-forking.js';
+import { RealTimeQueryController } from '../sdk/query-control.js';
 let SessionManager = class SessionManager {
     terminalManager;
     memoryManager;
@@ -213,6 +215,8 @@ export class Orchestrator {
     startTime = Date.now();
     claudeClient;
     configManager;
+    parallelExecutor;
+    queryController;
     metrics = {
         completedTasks: 0,
         failedTasks: 0,
@@ -265,6 +269,17 @@ export class Orchestrator {
                     this.logger.warn('Failed to initialize Claude API client', error);
                 }
             }
+            this.parallelExecutor = new ParallelSwarmExecutor();
+            this.queryController = new RealTimeQueryController({
+                allowPause: true,
+                allowModelChange: true,
+                allowPermissionChange: true,
+                monitoringInterval: 1000
+            });
+            this.logger.info('Session forking and query control initialized', {
+                parallelExecutor: 'enabled',
+                queryController: 'enabled'
+            });
             await this.sessionManager.restoreSessions();
             this.setupEventHandlers();
             this.startHealthChecks();
@@ -348,6 +363,72 @@ export class Orchestrator {
         } catch (error) {
             this.logger.error('Failed to spawn agent', {
                 agentId: profile.id,
+                error
+            });
+            throw error;
+        }
+    }
+    async spawnParallelAgents(profiles) {
+        if (!this.initialized) {
+            throw new SystemError('Orchestrator not initialized');
+        }
+        if (!this.parallelExecutor) {
+            throw new SystemError('Parallel executor not initialized');
+        }
+        if (this.agents.size + profiles.length > this.config.orchestrator.maxConcurrentAgents) {
+            throw new SystemError('Would exceed maximum concurrent agents');
+        }
+        profiles.forEach((profile)=>this.validateAgentProfile(profile));
+        this.logger.info('Spawning parallel agents', {
+            count: profiles.length,
+            types: profiles.map((p)=>p.type)
+        });
+        try {
+            const agentConfigs = profiles.map((profile)=>({
+                    agentId: profile.id,
+                    agentType: profile.type,
+                    task: `Initialize ${profile.type} agent with capabilities: ${profile.capabilities.join(', ')}`,
+                    capabilities: profile.capabilities,
+                    priority: profile.priority >= 90 ? 'critical' : profile.priority >= 70 ? 'high' : profile.priority >= 40 ? 'medium' : 'low',
+                    timeout: 60000
+                }));
+            const result = await this.parallelExecutor.spawnParallelAgents(agentConfigs, {
+                maxParallelAgents: Math.min(profiles.length, 10),
+                timeout: 60000,
+                model: 'claude-sonnet-4'
+            });
+            const sessionMap = new Map();
+            for (const profile of profiles){
+                if (result.successfulAgents.includes(profile.id)) {
+                    const session = {
+                        id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        agentId: profile.id,
+                        terminalId: 'forked',
+                        startTime: new Date(),
+                        status: 'active',
+                        lastActivity: new Date(),
+                        memoryBankId: `memory_${profile.id}`
+                    };
+                    this.agents.set(profile.id, profile);
+                    sessionMap.set(profile.id, session.id);
+                    this.eventBus.emit(SystemEvents.AGENT_SPAWNED, {
+                        agentId: profile.id,
+                        profile,
+                        sessionId: session.id,
+                        parallel: true
+                    });
+                    this.startAgentHealthMonitoring(profile.id);
+                }
+            }
+            this.logger.info('Parallel agent spawning completed', {
+                successful: result.successfulAgents.length,
+                failed: result.failedAgents.length,
+                duration: result.totalDuration,
+                performanceGain: this.parallelExecutor.getMetrics().performanceGain
+            });
+            return sessionMap;
+        } catch (error) {
+            this.logger.error('Failed to spawn parallel agents', {
                 error
             });
             throw error;
@@ -995,6 +1076,12 @@ export class Orchestrator {
     }
     getClaudeClient() {
         return this.claudeClient;
+    }
+    getParallelExecutor() {
+        return this.parallelExecutor;
+    }
+    getQueryController() {
+        return this.queryController;
     }
     updateClaudeConfig(config) {
         this.configManager.setClaudeConfig(config);

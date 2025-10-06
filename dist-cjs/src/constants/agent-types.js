@@ -1,5 +1,6 @@
 import { getAvailableAgentTypes, isValidAgentType as validateAgentType, resolveLegacyAgentType as resolveLegacy, LEGACY_AGENT_MAPPING as LEGACY_MAPPING } from '../agents/agent-loader.js';
 export const LEGACY_AGENT_MAPPING = LEGACY_MAPPING;
+export { getAvailableAgentTypes };
 export async function getValidAgentTypes() {
     return await getAvailableAgentTypes();
 }

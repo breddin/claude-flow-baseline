@@ -63,7 +63,7 @@ function resolveLegacyAgentType(legacyType) {
 
 class ClaudeFlowMCPServer {
   constructor() {
-    this.version = '2.0.0-alpha.59';
+    this.version = '2.5.0-alpha.131'; // Updated with Phase 4 SDK integration tools
     this.memoryStore = memoryStore; // Use shared singleton instance
     // Use the same memory system that already works
     this.capabilities = {
@@ -930,6 +930,93 @@ class ClaudeFlowMCPServer {
         name: 'diagnostic_run',
         description: 'System diagnostics',
         inputSchema: { type: 'object', properties: { components: { type: 'array' } } },
+      },
+
+      // Phase 4: SDK Integration - Real-Time Query Control & Parallel Spawning (v2.5.0-alpha.131)
+      agents_spawn_parallel: {
+        name: 'agents_spawn_parallel',
+        description: 'Spawn multiple agents in parallel (10-20x faster than sequential spawning)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            agents: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  type: { type: 'string', description: 'Agent type' },
+                  name: { type: 'string', description: 'Agent name' },
+                  capabilities: { type: 'array', items: { type: 'string' } },
+                  priority: {
+                    type: 'string',
+                    enum: ['low', 'medium', 'high', 'critical'],
+                    default: 'medium'
+                  },
+                },
+                required: ['type', 'name'],
+              },
+              description: 'Array of agent configurations to spawn in parallel',
+            },
+            maxConcurrency: {
+              type: 'number',
+              default: 5,
+              description: 'Maximum number of agents to spawn concurrently',
+            },
+            batchSize: {
+              type: 'number',
+              default: 3,
+              description: 'Number of agents per batch',
+            },
+          },
+          required: ['agents'],
+        },
+      },
+      query_control: {
+        name: 'query_control',
+        description: 'Control running queries (pause, resume, terminate, change model)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: ['pause', 'resume', 'terminate', 'change_model', 'change_permissions', 'execute_command'],
+              description: 'Control action to perform',
+            },
+            queryId: {
+              type: 'string',
+              description: 'ID of the query to control',
+            },
+            model: {
+              type: 'string',
+              enum: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'],
+              description: 'Model to switch to (for change_model action)',
+            },
+            permissionMode: {
+              type: 'string',
+              enum: ['default', 'acceptEdits', 'bypassPermissions', 'plan'],
+              description: 'Permission mode to switch to (for change_permissions action)',
+            },
+            command: {
+              type: 'string',
+              description: 'Command to execute (for execute_command action)',
+            },
+          },
+          required: ['action', 'queryId'],
+        },
+      },
+      query_list: {
+        name: 'query_list',
+        description: 'List all active queries and their status',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            includeHistory: {
+              type: 'boolean',
+              default: false,
+              description: 'Include completed queries in the list',
+            },
+          },
+        },
       },
     };
   }

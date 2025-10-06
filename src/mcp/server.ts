@@ -144,7 +144,7 @@ export class MCPServer implements IMCPServer {
       await this.transport.start();
 
       // Register built-in tools
-      this.registerBuiltInTools();
+      await this.registerBuiltInTools();
 
       this.running = true;
       this.logger.info('MCP server started successfully');
@@ -434,7 +434,7 @@ export class MCPServer implements IMCPServer {
     }
   }
 
-  private registerBuiltInTools(): void {
+  private async registerBuiltInTools(): Promise<void> {
     // System information tool
     this.registerTool({
       name: 'system/info',
@@ -506,7 +506,7 @@ export class MCPServer implements IMCPServer {
 
     // Register Claude-Flow specific tools if orchestrator is available
     if (this.orchestrator) {
-      const claudeFlowTools = createClaudeFlowTools(this.logger);
+      const claudeFlowTools = await createClaudeFlowTools(this.logger);
 
       for (const tool of claudeFlowTools) {
         // Wrap the handler to inject orchestrator context

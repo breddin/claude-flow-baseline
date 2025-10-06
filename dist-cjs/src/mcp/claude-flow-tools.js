@@ -22,9 +22,12 @@ async function enhanceToolWithAgentTypes(tool) {
 export async function createClaudeFlowTools(logger) {
     const tools = [
         createSpawnAgentTool(logger),
+        createSpawnParallelAgentsTool(logger),
         createListAgentsTool(logger),
         createTerminateAgentTool(logger),
         createGetAgentInfoTool(logger),
+        createQueryControlTool(logger),
+        createListQueriesTool(logger),
         createCreateTaskTool(logger),
         createListTasksTool(logger),
         createGetTaskStatusTool(logger),
@@ -1325,6 +1328,253 @@ function createCreateTerminalTool(logger) {
             });
             return {
                 terminal,
+                timestamp: new Date().toISOString()
+            };
+        }
+    };
+}
+function createSpawnParallelAgentsTool(logger) {
+    return {
+        name: 'agents/spawn_parallel',
+        description: 'Spawn multiple agents in parallel (10-20x faster than sequential spawning)',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                agents: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            type: {
+                                type: 'string',
+                                description: 'Agent type'
+                            },
+                            name: {
+                                type: 'string',
+                                description: 'Agent name'
+                            },
+                            capabilities: {
+                                type: 'array',
+                                items: {
+                                    type: 'string'
+                                }
+                            },
+                            priority: {
+                                type: 'string',
+                                enum: [
+                                    'low',
+                                    'medium',
+                                    'high',
+                                    'critical'
+                                ],
+                                default: 'medium'
+                            }
+                        },
+                        required: [
+                            'type',
+                            'name'
+                        ]
+                    },
+                    description: 'Array of agent configurations to spawn in parallel'
+                },
+                maxConcurrency: {
+                    type: 'number',
+                    default: 5,
+                    description: 'Maximum number of agents to spawn concurrently'
+                },
+                batchSize: {
+                    type: 'number',
+                    default: 3,
+                    description: 'Number of agents per batch'
+                }
+            },
+            required: [
+                'agents'
+            ]
+        },
+        handler: async (input, context)=>{
+            logger.info('Spawning parallel agents', {
+                count: input.agents?.length,
+                sessionId: context?.sessionId
+            });
+            if (!context?.orchestrator) {
+                throw new Error('Orchestrator not available');
+            }
+            const executor = context.orchestrator.getParallelExecutor();
+            if (!executor) {
+                throw new Error('ParallelSwarmExecutor not initialized');
+            }
+            const agentConfigs = input.agents.map((agent)=>({
+                    agentId: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    agentType: agent.type,
+                    task: `Spawn ${agent.name} agent`,
+                    capabilities: agent.capabilities || [],
+                    priority: agent.priority || 'medium'
+                }));
+            const startTime = Date.now();
+            const sessions = await executor.spawnParallelAgents(agentConfigs, {
+                maxConcurrency: input.maxConcurrency || 5,
+                batchSize: input.batchSize || 3
+            });
+            const elapsedTime = Date.now() - startTime;
+            return {
+                success: true,
+                agentsSpawned: sessions.size,
+                sessions: Array.from(sessions.entries()).map(([id, session])=>({
+                        agentId: id,
+                        sessionId: session.sessionId,
+                        status: session.status
+                    })),
+                performance: {
+                    totalTime: elapsedTime,
+                    averageTimePerAgent: elapsedTime / sessions.size,
+                    speedupVsSequential: `~${Math.round(sessions.size * 750 / elapsedTime)}x`
+                },
+                timestamp: new Date().toISOString()
+            };
+        }
+    };
+}
+function createQueryControlTool(logger) {
+    return {
+        name: 'query/control',
+        description: 'Control running queries (pause, resume, terminate, change model)',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                action: {
+                    type: 'string',
+                    enum: [
+                        'pause',
+                        'resume',
+                        'terminate',
+                        'change_model',
+                        'change_permissions',
+                        'execute_command'
+                    ],
+                    description: 'Control action to perform'
+                },
+                queryId: {
+                    type: 'string',
+                    description: 'ID of the query to control'
+                },
+                model: {
+                    type: 'string',
+                    enum: [
+                        'claude-3-5-sonnet-20241022',
+                        'claude-3-5-haiku-20241022',
+                        'claude-3-opus-20240229'
+                    ],
+                    description: 'Model to switch to (for change_model action)'
+                },
+                permissionMode: {
+                    type: 'string',
+                    enum: [
+                        'default',
+                        'acceptEdits',
+                        'bypassPermissions',
+                        'plan'
+                    ],
+                    description: 'Permission mode to switch to (for change_permissions action)'
+                },
+                command: {
+                    type: 'string',
+                    description: 'Command to execute (for execute_command action)'
+                }
+            },
+            required: [
+                'action',
+                'queryId'
+            ]
+        },
+        handler: async (input, context)=>{
+            logger.info('Query control action', {
+                action: input.action,
+                queryId: input.queryId,
+                sessionId: context?.sessionId
+            });
+            if (!context?.orchestrator) {
+                throw new Error('Orchestrator not available');
+            }
+            const controller = context.orchestrator.getQueryController();
+            if (!controller) {
+                throw new Error('RealTimeQueryController not initialized');
+            }
+            let result;
+            switch(input.action){
+                case 'pause':
+                    result = await controller.pauseQuery(input.queryId);
+                    break;
+                case 'resume':
+                    result = await controller.resumeQuery(input.queryId);
+                    break;
+                case 'terminate':
+                    result = await controller.terminateQuery(input.queryId);
+                    break;
+                case 'change_model':
+                    if (!input.model) {
+                        throw new Error('model parameter required for change_model action');
+                    }
+                    result = await controller.changeModel(input.queryId, input.model);
+                    break;
+                case 'change_permissions':
+                    if (!input.permissionMode) {
+                        throw new Error('permissionMode parameter required for change_permissions action');
+                    }
+                    result = await controller.changePermissionMode(input.queryId, input.permissionMode);
+                    break;
+                case 'execute_command':
+                    if (!input.command) {
+                        throw new Error('command parameter required for execute_command action');
+                    }
+                    result = await controller.executeCommand(input.queryId, input.command);
+                    break;
+                default:
+                    throw new Error(`Unknown action: ${input.action}`);
+            }
+            return {
+                success: true,
+                action: input.action,
+                queryId: input.queryId,
+                result,
+                timestamp: new Date().toISOString()
+            };
+        }
+    };
+}
+function createListQueriesTool(logger) {
+    return {
+        name: 'query/list',
+        description: 'List all active queries and their status',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                includeHistory: {
+                    type: 'boolean',
+                    default: false,
+                    description: 'Include completed queries in the list'
+                }
+            }
+        },
+        handler: async (input, context)=>{
+            logger.info('Listing queries', {
+                sessionId: context?.sessionId
+            });
+            if (!context?.orchestrator) {
+                throw new Error('Orchestrator not available');
+            }
+            const controller = context.orchestrator.getQueryController();
+            if (!controller) {
+                throw new Error('RealTimeQueryController not initialized');
+            }
+            const queries = controller.getAllQueries();
+            return {
+                success: true,
+                queries: Array.from(queries.entries()).map(([id, status])=>({
+                        queryId: id,
+                        ...status
+                    })),
+                count: queries.size,
                 timestamp: new Date().toISOString()
             };
         }

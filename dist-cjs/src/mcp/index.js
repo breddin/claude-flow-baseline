@@ -1,3 +1,6 @@
+export { InProcessMCPServer, createInProcessServer } from './in-process-server.js';
+export { ClaudeFlowToolRegistry, createToolRegistry, createClaudeFlowSdkServer } from './tool-registry.js';
+export { SDKIntegration, initializeSDKIntegration, getSDKIntegration, createInProcessQuery, getInProcessServerConfig, measurePerformance } from './sdk-integration.js';
 export { MCPServer } from './server.js';
 export { MCPLifecycleManager, LifecycleState } from './lifecycle-manager.js';
 export { ToolRegistry } from './tools.js';
@@ -143,5 +146,32 @@ export const MCPUtils = {
         return `mcp_req_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
     }
 };
+export async function initializeInProcessMCP(orchestratorContext) {
+    const { initializeSDKIntegration } = await import('./sdk-integration.js');
+    return initializeSDKIntegration({
+        enableInProcess: true,
+        enableMetrics: true,
+        enableCaching: true,
+        orchestratorContext,
+        fallbackToStdio: true
+    });
+}
+export async function getInProcessMCPStatus() {
+    const { getSDKIntegration } = await import('./sdk-integration.js');
+    const integration = getSDKIntegration();
+    if (!integration) {
+        return {
+            initialized: false,
+            inProcess: false,
+            message: 'In-process MCP not initialized'
+        };
+    }
+    return {
+        initialized: true,
+        inProcess: integration.isInProcessAvailable(),
+        metrics: integration.getMetrics(),
+        performanceComparison: integration.getPerformanceComparison()
+    };
+}
 
 //# sourceMappingURL=index.js.map

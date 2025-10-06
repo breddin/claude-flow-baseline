@@ -16,6 +16,9 @@ export type AgentType = string;
 // Re-export legacy mapping from agent-loader
 export const LEGACY_AGENT_MAPPING = LEGACY_MAPPING;
 
+// Re-export getAvailableAgentTypes for MCP tools
+export { getAvailableAgentTypes };
+
 /**
  * Get all valid agent types dynamically
  */

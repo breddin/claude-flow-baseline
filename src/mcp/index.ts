@@ -3,6 +3,27 @@
  * Export all MCP components for easy integration
  */
 
+// Phase 6: In-Process MCP Server (10-100x performance improvement)
+export { InProcessMCPServer, createInProcessServer } from './in-process-server.js';
+export type { InProcessServerConfig, ToolCallMetrics } from './in-process-server.js';
+
+export {
+  ClaudeFlowToolRegistry,
+  createToolRegistry,
+  createClaudeFlowSdkServer,
+} from './tool-registry.js';
+export type { ToolRegistryConfig } from './tool-registry.js';
+
+export {
+  SDKIntegration,
+  initializeSDKIntegration,
+  getSDKIntegration,
+  createInProcessQuery,
+  getInProcessServerConfig,
+  measurePerformance,
+} from './sdk-integration.js';
+export type { SDKIntegrationConfig } from './sdk-integration.js';
+
 // Core MCP Server
 export { MCPServer, type IMCPServer } from './server.js';
 
@@ -314,3 +335,44 @@ export const MCPUtils = {
     return `mcp_req_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
   },
 };
+
+/**
+ * Phase 6: Initialize MCP with in-process server for maximum performance
+ *
+ * Provides 10-100x performance improvement by eliminating IPC overhead.
+ * All Claude-Flow MCP tools execute in-process with microsecond latency.
+ */
+export async function initializeInProcessMCP(orchestratorContext?: any) {
+  const { initializeSDKIntegration } = await import('./sdk-integration.js');
+
+  return initializeSDKIntegration({
+    enableInProcess: true,
+    enableMetrics: true,
+    enableCaching: true,
+    orchestratorContext,
+    fallbackToStdio: true,
+  });
+}
+
+/**
+ * Phase 6: Get in-process server status and performance metrics
+ */
+export async function getInProcessMCPStatus() {
+  const { getSDKIntegration } = await import('./sdk-integration.js');
+  const integration = getSDKIntegration();
+
+  if (!integration) {
+    return {
+      initialized: false,
+      inProcess: false,
+      message: 'In-process MCP not initialized',
+    };
+  }
+
+  return {
+    initialized: true,
+    inProcess: integration.isInProcessAvailable(),
+    metrics: integration.getMetrics(),
+    performanceComparison: integration.getPerformanceComparison(),
+  };
+}

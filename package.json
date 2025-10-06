@@ -1,6 +1,6 @@
 {
   "name": "claude-flow",
-  "version": "2.0.0-alpha.128",
+  "version": "2.5.0-alpha.131",
   "description": "Enterprise-grade AI agent orchestration with ruv-swarm integration",
   "mcpName": "io.github.ruvnet/claude-flow",
   "main": "cli.mjs",
@@ -116,6 +116,8 @@
     "DOCKER_TEST_REPORT.md"
   ],
   "dependencies": {
+    "@anthropic-ai/claude-code": "^2.0.1",
+    "@anthropic-ai/sdk": "^0.65.0",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "@types/better-sqlite3": "^7.6.13",
     "blessed": "^0.1.81",

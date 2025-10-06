@@ -1,43 +1,18 @@
-# 🌊 Claude-Flow Baseline: Rolling Mirror Repository
-
-This is a **rolling mirror** of [ruvnet/claude-flow](https://github.com/ruvnet/claude-flow) maintained by @breddin.
-
-## 🎯 Purpose
-
-This repository serves as a **clean baseline** for tracking upstream changes from the main claude-flow project, with minimal modifications:
-
-- ✅ **Rolling Updates**: Automatically synced with ruvnet/claude-flow
-- ✅ **Minimal Patches**: Only essential compatibility fixes
-- ✅ **GitHub Token Support**: Handles $_GITHUB_PAT → $GITHUB_TOKEN mapping
-- ❌ **No Custom Features**: No additional functionality beyond upstream
-
-## 🔧 GitHub Token Configuration
-
-For cross-repository operations, source the token configuration:
-
-```bash
-source .env.github-token
-```
-
-This maps your `$_GITHUB_PAT` environment variable to `$GITHUB_TOKEN` for claude-flow operations.
-
----
-
-# 🌊 Claude-Flow v2.0.0 Alpha: AI Orchestration Platform
+# 🌊 Claude-Flow v2.5.0 Alpha 130: AI Orchestration Platform
 
 <div align="center">
 
 [![🌟 Star on GitHub](https://img.shields.io/github/stars/ruvnet/claude-flow?style=for-the-badge&logo=github&color=gold)](https://github.com/ruvnet/claude-flow)
 [![📈 Downloads](https://img.shields.io/npm/dt/claude-flow?style=for-the-badge&logo=npm&color=blue&label=Downloads)](https://www.npmjs.com/package/claude-flow)
-[![📦 Latest Release](https://img.shields.io/npm/v/claude-flow?style=for-the-badge&logo=npm&color=green&label=v2.0.0)](https://www.npmjs.com/package/claude-flow)
-[![⚡ Claude Code](https://img.shields.io/badge/Claude%20Code-Optimized-green?style=for-the-badge&logo=anthropic)](https://github.com/ruvnet/claude-flow)
+[![📦 Latest Release](https://img.shields.io/npm/v/claude-flow?style=for-the-badge&logo=npm&color=green&label=v2.5.0-alpha.130)](https://www.npmjs.com/package/claude-flow)
+[![⚡ Claude Code](https://img.shields.io/badge/Claude%20Code-SDK%20Integrated-green?style=for-the-badge&logo=anthropic)](https://github.com/ruvnet/claude-flow)
 [![🏛️ Agentics Foundation](https://img.shields.io/badge/Agentics-Foundation-crimson?style=for-the-badge&logo=openai)](https://discord.com/invite/dfxmpwkG2D)
 [![🐝 Hive-Mind](https://img.shields.io/badge/Hive--Mind-AI%20Coordination-purple?style=for-the-badge&logo=swarm)](https://github.com/ruvnet/claude-flow)
 [![🧠 Neural](https://img.shields.io/badge/Neural-87%20MCP%20Tools-blue?style=for-the-badge&logo=pytorch)](https://github.com/ruvnet/claude-flow)
 [![🛡️ MIT License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge&logo=opensourceinitiative)](https://opensource.org/licenses/MIT)
 
 </div>
-
+ 
 ---
 
 ## 🌟 **Overview**

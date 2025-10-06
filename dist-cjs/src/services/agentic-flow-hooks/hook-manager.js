@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { Logger } from '../../core/logger.js';
+import { HookMatcher } from '../../hooks/hook-matchers.js';
 const logger = new Logger({
     level: 'info',
     format: 'text',
@@ -12,9 +13,15 @@ export class AgenticHookManager extends EventEmitter {
     pipelines = new Map();
     metrics = new Map();
     activeExecutions = new Set();
+    hookMatcher;
     constructor(){
         super();
         this.initializeMetrics();
+        this.hookMatcher = new HookMatcher({
+            cacheEnabled: true,
+            cacheTTL: 60000,
+            matchStrategy: 'all'
+        });
     }
     register(registration) {
         const { type, id } = registration;
@@ -77,15 +84,27 @@ export class AgenticHookManager extends EventEmitter {
         const startTime = Date.now();
         const results = [];
         try {
-            const hooks = this.getHooks(type, this.createFilterFromPayload(payload));
-            logger.debug(`Executing ${hooks.length} hooks for type '${type}'`);
+            const allHooks = this.hooks.get(type) || [];
+            const matchedHooks = [];
+            for (const hook of allHooks){
+                const matchResult = await this.hookMatcher.match(hook, context, payload);
+                if (matchResult.matched) {
+                    matchedHooks.push(hook);
+                    this.updateMetric('hooks.matcher.executionTime', matchResult.executionTime);
+                    if (matchResult.cacheHit) {
+                        this.updateMetric('hooks.matcher.cacheHits', 1);
+                    }
+                }
+            }
+            logger.debug(`Executing ${matchedHooks.length}/${allHooks.length} matched hooks for type '${type}'`);
             this.emit('hooks:executing', {
                 type,
-                count: hooks.length,
+                total: allHooks.length,
+                matched: matchedHooks.length,
                 executionId
             });
             let modifiedPayload = payload;
-            for (const hook of hooks){
+            for (const hook of matchedHooks){
                 try {
                     const result = await this.executeHook(hook, modifiedPayload, context);
                     results.push(result);
@@ -186,7 +205,19 @@ export class AgenticHookManager extends EventEmitter {
         metrics['hooks.types'] = Array.from(this.hooks.keys());
         metrics['pipelines.count'] = this.pipelines.size;
         metrics['executions.active'] = this.activeExecutions.size;
+        const matcherStats = this.hookMatcher.getCacheStats();
+        metrics['hooks.matcher.cacheSize'] = matcherStats.size;
+        metrics['hooks.matcher.cacheHitRate'] = matcherStats.hitRate;
         return metrics;
+    }
+    clearMatcherCache() {
+        this.hookMatcher.clearCache();
+        logger.info('Hook matcher cache cleared');
+    }
+    pruneMatcherCache() {
+        const pruned = this.hookMatcher.pruneCache();
+        logger.info(`Pruned ${pruned} expired matcher cache entries`);
+        return pruned;
     }
     validateRegistration(registration) {
         if (!registration.id) {

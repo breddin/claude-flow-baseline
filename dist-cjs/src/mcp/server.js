@@ -89,7 +89,7 @@ export class MCPServer {
                 return await this.handleRequest(request);
             });
             await this.transport.start();
-            this.registerBuiltInTools();
+            await this.registerBuiltInTools();
             this.running = true;
             this.logger.info('MCP server started successfully');
         } catch (error) {
@@ -316,7 +316,7 @@ export class MCPServer {
                 throw new MCPErrorClass(`Unknown transport type: ${this.config.transport}`);
         }
     }
-    registerBuiltInTools() {
+    async registerBuiltInTools() {
         this.registerTool({
             name: 'system/info',
             description: 'Get system information',
@@ -383,7 +383,7 @@ export class MCPServer {
             }
         });
         if (this.orchestrator) {
-            const claudeFlowTools = createClaudeFlowTools(this.logger);
+            const claudeFlowTools = await createClaudeFlowTools(this.logger);
             for (const tool of claudeFlowTools){
                 const originalHandler = tool.handler;
                 tool.handler = async (input, context)=>{

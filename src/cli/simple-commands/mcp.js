@@ -68,6 +68,9 @@ async function startMcpServer(subArgs, flags) {
 
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
+      // TODO: Switch to new TypeScript server (server-standalone.js) after fixing import resolution
+      // For now, using old mcp-server.js for local testing
+      // Phase 4 tools will be available after NPM publish
       const mcpServerPath = path.join(__dirname, '../../mcp/mcp-server.js');
 
       // Check if the file exists, and log the path for debugging
