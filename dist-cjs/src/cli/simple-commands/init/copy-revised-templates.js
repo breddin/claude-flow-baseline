@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_TEMPLATES_DIR = path.join(__dirname, '../../../../.claude/commands');
+const INIT_TEMPLATES_DIR = path.join(__dirname, './templates');
 export async function copyRevisedTemplates(targetDir, options = {}) {
     const results = {
         success: true,
@@ -19,16 +20,24 @@ export async function copyRevisedTemplates(targetDir, options = {}) {
         await copyDirectoryRecursive(REPO_TEMPLATES_DIR, targetCommandsDir, options, results);
         const additionalFiles = [
             {
-                source: '../config.json',
+                source: REPO_TEMPLATES_DIR,
+                relative: '../config.json',
                 target: '.claude/config.json'
             },
             {
-                source: '../settings.json',
+                source: REPO_TEMPLATES_DIR,
+                relative: '../settings.json',
                 target: '.claude/settings.json'
+            },
+            {
+                source: INIT_TEMPLATES_DIR,
+                relative: 'statusline-command.sh',
+                target: '.claude/statusline-command.sh',
+                executable: true
             }
         ];
         for (const file of additionalFiles){
-            const sourcePath = path.join(REPO_TEMPLATES_DIR, file.source);
+            const sourcePath = path.join(file.source, file.relative);
             const targetPath = path.join(targetDir, file.target);
             if (fs.existsSync(sourcePath)) {
                 try {
@@ -38,6 +47,9 @@ export async function copyRevisedTemplates(targetDir, options = {}) {
                     });
                     if (!fs.existsSync(targetPath) || options.force) {
                         await fs.promises.copyFile(sourcePath, targetPath);
+                        if (file.executable) {
+                            await fs.promises.chmod(targetPath, 0o755);
+                        }
                         results.copiedFiles.push(file.target);
                         if (!options.dryRun) {
                             console.log(`  ✓ Copied ${file.target}`);

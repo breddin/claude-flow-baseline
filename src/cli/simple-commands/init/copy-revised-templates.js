@@ -9,6 +9,8 @@ const __dirname = path.dirname(__filename);
 
 // Source directory for revised templates (repository root .claude/commands)
 const REPO_TEMPLATES_DIR = path.join(__dirname, '../../../../.claude/commands');
+// Source directory for init templates
+const INIT_TEMPLATES_DIR = path.join(__dirname, './templates');
 
 /**
  * Copy revised template files from repository to target project
@@ -32,12 +34,13 @@ export async function copyRevisedTemplates(targetDir, options = {}) {
 
     // Copy additional .claude files if they exist
     const additionalFiles = [
-      { source: '../config.json', target: '.claude/config.json' },
-      { source: '../settings.json', target: '.claude/settings.json' }
+      { source: REPO_TEMPLATES_DIR, relative: '../config.json', target: '.claude/config.json' },
+      { source: REPO_TEMPLATES_DIR, relative: '../settings.json', target: '.claude/settings.json' },
+      { source: INIT_TEMPLATES_DIR, relative: 'statusline-command.sh', target: '.claude/statusline-command.sh', executable: true }
     ];
 
     for (const file of additionalFiles) {
-      const sourcePath = path.join(REPO_TEMPLATES_DIR, file.source);
+      const sourcePath = path.join(file.source, file.relative);
       const targetPath = path.join(targetDir, file.target);
 
       if (fs.existsSync(sourcePath)) {
@@ -47,6 +50,10 @@ export async function copyRevisedTemplates(targetDir, options = {}) {
           
           if (!fs.existsSync(targetPath) || options.force) {
             await fs.promises.copyFile(sourcePath, targetPath);
+            // Make file executable if flagged
+            if (file.executable) {
+              await fs.promises.chmod(targetPath, 0o755);
+            }
             results.copiedFiles.push(file.target);
             if (!options.dryRun) {
               console.log(`  ✓ Copied ${file.target}`);
