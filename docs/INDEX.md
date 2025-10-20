@@ -244,11 +244,42 @@ npx claude-flow@alpha --agents 3 swarm "task description"
 
 ### 📖 **Core Documentation**
 ```
-├── 📄 README-NEW.md           # Project overview & quick start
-├── 🏗️ ARCHITECTURE.md         # System design & patterns  
-├── 🚀 DEPLOYMENT.md           # Installation & production setup
-├── 🛠️ DEVELOPMENT_WORKFLOW.md # Development best practices
-└── 📡 API_DOCUMENTATION.md    # Complete API reference
+├── 📄 README.md                # Documentation hub overview
+├── 🏗️ ARCHITECTURE.md          # System design & patterns
+├── 🚀 DEPLOYMENT.md            # Installation & production setup
+├── 🛠️ DEVELOPMENT_WORKFLOW.md  # Development best practices
+└── 📡 API_DOCUMENTATION.md     # Complete API reference
+```
+
+### 📁 **Documentation Structure**
+```
+docs/
+├── 📄 README.md & INDEX.md                    # Core entry points
+│
+├── 🔌 integrations/                           # Platform Integrations
+│   ├── reasoningbank/                         # ReasoningBank AI integration (16 docs)
+│   ├── agentic-flow/                          # Agentic Flow system (5 docs)
+│   ├── agent-booster/                         # Agent performance optimization
+│   └── epic-sdk/                              # Epic SDK integration
+│
+├── 📊 reports/                                # Analysis & Reports
+│   ├── validation/                            # Validation & testing reports (7 docs)
+│   ├── releases/                              # Release notes & summaries (4 docs)
+│   └── analysis/                              # Deep analysis & reviews (2 docs)
+│
+├── 🔧 technical/                              # Technical Details
+│   ├── fixes/                                 # Technical fix summaries (2 docs)
+│   └── performance/                           # Performance reports & metrics
+│
+├── 🏗️ architecture/                           # Architecture documentation
+├── 📚 guides/                                 # User guides & tutorials
+├── 🔬 experimental/                           # Experimental features
+├── 📘 reference/                              # API & command reference
+├── ⚙️ setup/                                  # Setup & configuration (+ ENV-SETUP-GUIDE)
+├── ✅ validation/                             # Validation frameworks
+├── 🔄 ci-cd/                                  # CI/CD workflows
+├── 📦 sdk/                                    # SDK documentation
+└── 📖 wiki/                                   # Additional wiki content
 ```
 
 ### 🎯 **By User Type**

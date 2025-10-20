@@ -1,7 +1,7 @@
 {
   "name": "claude-flow",
-  "version": "2.5.0-alpha.131",
-  "description": "Enterprise-grade AI agent orchestration with ruv-swarm integration",
+  "version": "2.7.0-alpha.14",
+  "description": "Enterprise-grade AI agent orchestration with WASM-powered ReasoningBank memory and AgentDB vector database (always uses latest agentic-flow)",
   "mcpName": "io.github.ruvnet/claude-flow",
   "main": "cli.mjs",
   "bin": {
@@ -9,7 +9,8 @@
   },
   "scripts": {
     "preinstall": "node -e \"if(process.platform === 'win32' && process.env.npm_config_user_agent && process.env.npm_config_user_agent.includes('npm')) { console.warn('⚠️  Warning: On Windows, it is recommended to use pnpm to install this package to avoid potential native dependency build issues.'); console.warn('💡 Try: pnpm install or pnpx claude-flow@alpha'); }\"",
-    "dev": "tsx src/cli/main.ts",
+    "dev": "node --experimental-wasm-modules src/cli/main.ts",
+    "start": "node server.js",
     "init:neural": "node scripts/init-neural.js",
     "init:goal": "node scripts/init-goal.js",
     "build": "npm run clean && npm run update-version && npm run build:esm && npm run build:cjs && npm run build:binary",
@@ -57,8 +58,7 @@
     "publish:patch": "npm version patch && npm publish",
     "prepack": "echo 'Alpha release - skipping build for now'",
     "postpack": "echo 'Package created successfully'",
-    "prepare-publish": "node scripts/prepare-publish.js",
-    "start": "node server.js"
+    "prepare-publish": "node scripts/prepare-publish.js"
   },
   "keywords": [
     "claude",
@@ -108,6 +108,7 @@
     "dist/",
     "src/",
     ".claude/",
+    "docs/",
     "docker-test/",
     "scripts/",
     "README.md",
@@ -120,7 +121,9 @@
     "@anthropic-ai/sdk": "^0.65.0",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "@types/better-sqlite3": "^7.6.13",
+    "agentic-flow": "*",
     "blessed": "^0.1.81",
+    "flow-nexus": "^0.1.128",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.3",
     "commander": "^11.1.0",

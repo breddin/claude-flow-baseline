@@ -13,12 +13,90 @@ let metricsCache = {
     system: [],
     performance: {
         startTime: Date.now(),
+        sessionId: `session-${Date.now()}`,
+        lastActivity: Date.now(),
+        sessionDuration: 0,
         totalTasks: 0,
         successfulTasks: 0,
         failedTasks: 0,
         totalAgents: 0,
         activeAgents: 0,
-        neuralEvents: 0
+        neuralEvents: 0,
+        memoryMode: {
+            reasoningbankOperations: 0,
+            basicOperations: 0,
+            autoModeSelections: 0,
+            modeOverrides: 0,
+            currentMode: 'auto'
+        },
+        operations: {
+            store: {
+                count: 0,
+                totalDuration: 0,
+                errors: 0
+            },
+            retrieve: {
+                count: 0,
+                totalDuration: 0,
+                errors: 0
+            },
+            query: {
+                count: 0,
+                totalDuration: 0,
+                errors: 0
+            },
+            list: {
+                count: 0,
+                totalDuration: 0,
+                errors: 0
+            },
+            delete: {
+                count: 0,
+                totalDuration: 0,
+                errors: 0
+            },
+            search: {
+                count: 0,
+                totalDuration: 0,
+                errors: 0
+            },
+            init: {
+                count: 0,
+                totalDuration: 0,
+                errors: 0
+            }
+        },
+        performance: {
+            avgOperationDuration: 0,
+            minOperationDuration: null,
+            maxOperationDuration: null,
+            slowOperations: 0,
+            fastOperations: 0,
+            totalOperationTime: 0
+        },
+        storage: {
+            totalEntries: 0,
+            reasoningbankEntries: 0,
+            basicEntries: 0,
+            databaseSize: 0,
+            lastBackup: null,
+            growthRate: 0
+        },
+        errors: {
+            total: 0,
+            byType: {},
+            byOperation: {},
+            recent: []
+        },
+        reasoningbank: {
+            semanticSearches: 0,
+            sqlFallbacks: 0,
+            embeddingGenerated: 0,
+            consolidations: 0,
+            avgQueryTime: 0,
+            cacheHits: 0,
+            cacheMisses: 0
+        }
     }
 };
 let systemMonitoringInterval = null;
@@ -119,6 +197,158 @@ export async function trackAgentActivity(agentId, agentType, action, duration, s
 export async function trackNeuralEvent(eventType, metadata = {}) {
     metricsCache.performance.neuralEvents++;
     await saveMetricsToDisk();
+}
+export async function trackMemoryOperation(operationType, mode, duration, success = true, errorType = null) {
+    metricsCache.performance.lastActivity = Date.now();
+    metricsCache.performance.sessionDuration = Date.now() - metricsCache.performance.startTime;
+    if (mode === 'reasoningbank') {
+        metricsCache.performance.memoryMode.reasoningbankOperations++;
+    } else if (mode === 'basic') {
+        metricsCache.performance.memoryMode.basicOperations++;
+    }
+    if (metricsCache.performance.operations[operationType]) {
+        const op = metricsCache.performance.operations[operationType];
+        op.count++;
+        op.totalDuration += duration;
+        if (!success) {
+            op.errors++;
+        }
+    }
+    const perf = metricsCache.performance.performance;
+    perf.totalOperationTime += duration;
+    const totalOps = Object.values(metricsCache.performance.operations).reduce((sum, op)=>sum + op.count, 0);
+    if (totalOps > 0) {
+        perf.avgOperationDuration = perf.totalOperationTime / totalOps;
+    }
+    if (perf.minOperationDuration === null || duration < perf.minOperationDuration) {
+        perf.minOperationDuration = duration;
+    }
+    if (perf.maxOperationDuration === null || duration > perf.maxOperationDuration) {
+        perf.maxOperationDuration = duration;
+    }
+    if (duration > 5000) {
+        perf.slowOperations++;
+    } else if (duration < 100) {
+        perf.fastOperations++;
+    }
+    if (!success && errorType) {
+        metricsCache.performance.errors.total++;
+        if (!metricsCache.performance.errors.byType[errorType]) {
+            metricsCache.performance.errors.byType[errorType] = 0;
+        }
+        metricsCache.performance.errors.byType[errorType]++;
+        if (!metricsCache.performance.errors.byOperation[operationType]) {
+            metricsCache.performance.errors.byOperation[operationType] = 0;
+        }
+        metricsCache.performance.errors.byOperation[operationType]++;
+        metricsCache.performance.errors.recent.push({
+            operation: operationType,
+            type: errorType,
+            timestamp: Date.now(),
+            mode
+        });
+        if (metricsCache.performance.errors.recent.length > 20) {
+            metricsCache.performance.errors.recent = metricsCache.performance.errors.recent.slice(-20);
+        }
+    }
+    await saveMetricsToDisk();
+}
+export async function trackModeSelection(selectedMode, wasAutomatic = true) {
+    metricsCache.performance.memoryMode.currentMode = selectedMode;
+    if (wasAutomatic) {
+        metricsCache.performance.memoryMode.autoModeSelections++;
+    } else {
+        metricsCache.performance.memoryMode.modeOverrides++;
+    }
+    await saveMetricsToDisk();
+}
+export async function trackReasoningBankOperation(operationType, duration, metadata = {}) {
+    const rb = metricsCache.performance.reasoningbank;
+    switch(operationType){
+        case 'semantic_search':
+            rb.semanticSearches++;
+            break;
+        case 'sql_fallback':
+            rb.sqlFallbacks++;
+            break;
+        case 'embedding_generated':
+            rb.embeddingGenerated++;
+            break;
+        case 'consolidation':
+            rb.consolidations++;
+            break;
+        case 'cache_hit':
+            rb.cacheHits++;
+            break;
+        case 'cache_miss':
+            rb.cacheMisses++;
+            break;
+    }
+    const totalQueries = rb.semanticSearches + rb.sqlFallbacks;
+    if (totalQueries > 0) {
+        rb.avgQueryTime = (rb.avgQueryTime * (totalQueries - 1) + duration) / totalQueries;
+    }
+    await saveMetricsToDisk();
+}
+export async function updateStorageStats(totalEntries, reasoningbankEntries, basicEntries, databaseSize = 0) {
+    const storage = metricsCache.performance.storage;
+    const previousTotal = storage.totalEntries;
+    storage.totalEntries = totalEntries;
+    storage.reasoningbankEntries = reasoningbankEntries;
+    storage.basicEntries = basicEntries;
+    storage.databaseSize = databaseSize;
+    if (previousTotal > 0) {
+        const sessionHours = metricsCache.performance.sessionDuration / (1000 * 60 * 60);
+        if (sessionHours > 0) {
+            storage.growthRate = (totalEntries - previousTotal) / sessionHours;
+        }
+    }
+    await saveMetricsToDisk();
+}
+export async function getMemoryPerformanceSummary() {
+    const perf = metricsCache.performance;
+    const totalOps = Object.values(perf.operations).reduce((sum, op)=>sum + op.count, 0);
+    const totalErrors = Object.values(perf.operations).reduce((sum, op)=>sum + op.errors, 0);
+    return {
+        session: {
+            sessionId: perf.sessionId,
+            duration: perf.sessionDuration,
+            startTime: new Date(perf.startTime).toISOString(),
+            lastActivity: new Date(perf.lastActivity).toISOString()
+        },
+        mode: {
+            current: perf.memoryMode.currentMode,
+            reasoningbankUsage: perf.memoryMode.reasoningbankOperations,
+            basicUsage: perf.memoryMode.basicOperations,
+            autoSelections: perf.memoryMode.autoModeSelections,
+            manualOverrides: perf.memoryMode.modeOverrides
+        },
+        operations: {
+            total: totalOps,
+            breakdown: perf.operations,
+            errors: totalErrors,
+            errorRate: totalOps > 0 ? totalErrors / totalOps * 100 : 0
+        },
+        performance: {
+            avgDuration: perf.performance.avgOperationDuration,
+            minDuration: perf.performance.minOperationDuration,
+            maxDuration: perf.performance.maxOperationDuration,
+            slowOps: perf.performance.slowOperations,
+            fastOps: perf.performance.fastOperations
+        },
+        storage: perf.storage,
+        reasoningbank: {
+            ...perf.reasoningbank,
+            fallbackRate: perf.reasoningbank.semanticSearches > 0 ? perf.reasoningbank.sqlFallbacks / perf.reasoningbank.semanticSearches * 100 : 0,
+            cacheHitRate: perf.reasoningbank.cacheHits + perf.reasoningbank.cacheMisses > 0 ? perf.reasoningbank.cacheHits / (perf.reasoningbank.cacheHits + perf.reasoningbank.cacheMisses) * 100 : 0
+        },
+        errors: {
+            total: perf.errors.total,
+            byType: perf.errors.byType,
+            byOperation: perf.errors.byOperation,
+            recent: perf.errors.recent.slice(-5)
+        }
+    };
 }
 export async function getPerformanceReport(timeframe = '24h') {
     const now = Date.now();
