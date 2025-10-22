@@ -82,21 +82,18 @@ async function listSparcModes(subArgs) {
   try {
     // Get the actual working directory where the command was run from
     const workingDir = process.env.PWD || cwd();
-    const configPath = `${workingDir}/.roomodes`;
+    const configPath = `${workingDir}/.claude/sparc-modes.json`;
     let configContent;
     try {
       configContent = await fs.readFile(configPath, 'utf8');
     } catch (error) {
-      printError('SPARC configuration file (.roomodes) not found');
-      console.log(`Please ensure .roomodes file exists in: ${workingDir}`);
+      printError('SPARC configuration file not found');
+      console.log(`Looking for: ${configPath}`);
       console.log();
-      console.log('To enable SPARC development modes, run:');
-      console.log('  npx claude-flow@latest init --sparc');
+      console.log('✅ SPARC modes are now part of .claude/ folder structure');
+      console.log('Run `claude-flow init` to set up the .claude/ folder with SPARC modes');
       console.log();
-      console.log('This will create:');
-      console.log('  • .roomodes file with 17+ SPARC development modes');
-      console.log('  • .roo/ directory with templates and workflows');
-      console.log('  • SPARC-enhanced CLAUDE.md configuration');
+      console.log('Or manually ensure .claude/sparc-modes.json exists');
       return;
     }
 
@@ -134,16 +131,16 @@ async function showModeInfo(subArgs) {
   try {
     // Get the actual working directory where the command was run from
     const workingDir = process.env.PWD || cwd();
-    const configPath = `${workingDir}/.roomodes`;
+    const configPath = `${workingDir}/.claude/sparc-modes.json`;
     let configContent;
     try {
       configContent = await fs.readFile(configPath, 'utf8');
     } catch (error) {
-      printError('SPARC configuration file (.roomodes) not found');
-      console.log(`Please ensure .roomodes file exists in: ${workingDir}`);
+      printError('SPARC configuration file not found');
+      console.log(`Looking for: ${configPath}`);
       console.log();
-      console.log('To enable SPARC development modes, run:');
-      console.log('  npx claude-flow@latest init --sparc');
+      console.log('✅ SPARC modes are now part of .claude/ folder structure');
+      console.log('Run `claude-flow init` to set up the .claude/ folder with SPARC modes');
       return;
     }
     const config = JSON.parse(configContent);
@@ -191,16 +188,16 @@ async function runSparcMode(subArgs, flags) {
   try {
     // Get the actual working directory where the command was run from
     const workingDir = process.env.PWD || cwd();
-    const configPath = `${workingDir}/.roomodes`;
+    const configPath = `${workingDir}/.claude/sparc-modes.json`;
     let configContent;
     try {
       configContent = await fs.readFile(configPath, 'utf8');
     } catch (error) {
-      printError('SPARC configuration file (.roomodes) not found');
-      console.log(`Please ensure .roomodes file exists in: ${workingDir}`);
+      printError('SPARC configuration file not found');
+      console.log(`Looking for: ${configPath}`);
       console.log();
-      console.log('To enable SPARC development modes, run:');
-      console.log('  npx claude-flow@latest init --sparc');
+      console.log('✅ SPARC modes are now part of .claude/ folder structure');
+      console.log('Run `claude-flow init` to set up the .claude/ folder with SPARC modes');
       return;
     }
     const config = JSON.parse(configContent);

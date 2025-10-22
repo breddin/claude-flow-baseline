@@ -19,6 +19,11 @@ function printHelp() {
   console.log(`
 🌊 Claude-Flow v${VERSION} - Enterprise-Grade AI Agent Orchestration Platform
 
+🎯 NEW IN v2.6.0: Multi-Provider Execution Engine with Agentic-Flow Integration
+   • 66+ specialized agents with multi-provider support (Anthropic, OpenRouter, ONNX, Gemini)
+   • 99% cost savings with OpenRouter, 352x faster local edits with Agent Booster
+   • Complete backwards compatibility with existing features
+
 🎯 ENTERPRISE FEATURES: Complete ruv-swarm integration with 27 MCP tools, neural networking, and production-ready infrastructure
 
 USAGE:
@@ -55,9 +60,10 @@ USAGE:
   init [--sparc]              # Initialize with enterprise environment + ruv-swarm
   start [--ui] [--swarm]      # Start orchestration with swarm intelligence
   spawn <type> [--name]       # Create AI agent with swarm coordination
-  agent <subcommand>          # Advanced agent management with neural patterns
+  agent <subcommand>          # 🆕 Multi-provider agent execution + management
   sparc <subcommand>          # 17 SPARC modes with neural enhancement
   memory <subcommand>         # Cross-session persistent memory with neural learning
+  config <subcommand>         # 🆕 Provider configuration management
   status                      # Comprehensive system status with performance metrics
 
 🤖 NEURAL AGENT TYPES (ruv-swarm Integration):
@@ -72,20 +78,25 @@ USAGE:
 
 🎮 ENTERPRISE QUICK START:
   # Initialize enterprise environment
-  npx claude-flow@2.0.0 init --sparc
-  
+  npx claude-flow@2.6.0-alpha.1 init --sparc
+
+  # 🆕 Execute agents with multi-provider support
+  ./claude-flow agent run coder "Build REST API with auth" --provider anthropic
+  ./claude-flow agent run researcher "Research React 19" --provider openrouter  # 99% cost savings
+  ./claude-flow agent agents  # List all 66+ available agents
+
   # Start enterprise orchestration with swarm intelligence
   ./claude-flow start --ui --swarm
-  
+
   # Deploy intelligent multi-agent development workflow
   ./claude-flow swarm "build enterprise API" --strategy development --parallel --monitor
-  
+
   # GitHub workflow automation
   ./claude-flow github pr-manager "coordinate release with automated testing"
-  
+
   # Neural memory management
   ./claude-flow memory store "architecture" "microservices with API gateway pattern"
-  
+
   # Real-time system monitoring
   ./claude-flow status --verbose
 

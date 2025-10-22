@@ -86,6 +86,17 @@ export async function hooksAction(subArgs, flags) {
         await notifyCommand(subArgs, flags);
         break;
 
+      // NEW: PreToolUse Modification Hooks (v2.0.10+)
+      case 'modify-bash':
+        await modifyBashCommand(subArgs, flags);
+        break;
+      case 'modify-file':
+        await modifyFileCommand(subArgs, flags);
+        break;
+      case 'modify-git-commit':
+        await modifyGitCommitCommand(subArgs, flags);
+        break;
+
       default:
         printError(`Unknown hooks command: ${subcommand}`);
         showHooksHelp();
@@ -1155,6 +1166,282 @@ async function notifyCommand(subArgs, flags) {
   }
 }
 
+// ===== PRETOOLUSE MODIFICATION HOOKS (v2.0.10+) =====
+
+async function modifyBashCommand(subArgs, flags) {
+  // Read JSON from stdin with timeout to detect if data is piped
+  let input = '';
+  let hasInput = false;
+
+  const timeout = setTimeout(() => {
+    if (!hasInput) {
+      console.log('Usage: echo \'{"tool_input":{"command":"your command"}}\' | claude-flow hooks modify-bash');
+      console.log('\nThis hook reads JSON from stdin and outputs modified JSON.');
+      console.log('It is designed for use with Claude Code v2.0.10+ PreToolUse feature.');
+      console.log('\nExample:');
+      console.log('  echo \'{"tool_input":{"command":"rm test.txt"}}\' | claude-flow hooks modify-bash');
+      process.exit(0);
+    }
+  }, 100); // 100ms timeout
+
+  for await (const chunk of process.stdin) {
+    hasInput = true;
+    clearTimeout(timeout);
+    input += chunk;
+  }
+
+  if (!input.trim()) {
+    return; // Silently exit if no input
+  }
+
+  const toolInput = JSON.parse(input);
+  const command = toolInput.tool_input?.command || '';
+
+  if (!command) {
+    console.log(input); // Pass through if no command
+    return;
+  }
+
+  let modifiedCommand = command;
+  const notes = [];
+
+  // 1. Safety: Add -i flag to rm commands
+  if (/^rm\s/.test(command) && !/-[iI]/.test(command)) {
+    modifiedCommand = command.replace(/^rm /, 'rm -i ');
+    notes.push('[Safety: Added -i flag for interactive confirmation]');
+  }
+
+  // 2. Aliases
+  if (/^ll(\s|$)/.test(command)) {
+    modifiedCommand = command.replace(/^ll/, 'ls -lah');
+    notes.push('[Alias: ll → ls -lah]');
+  } else if (/^la(\s|$)/.test(command)) {
+    modifiedCommand = command.replace(/^la/, 'ls -la');
+    notes.push('[Alias: la → ls -la]');
+  }
+
+  // 3. Path correction: Redirect test files to /tmp
+  if (/>\s*test.*\.(txt|log|tmp|json|md)/.test(command) && !/\/tmp\//.test(command)) {
+    modifiedCommand = command.replace(/>\s*(test[^/]*\.(txt|log|tmp|json|md))/, '> /tmp/$1');
+    notes.push('[Path: Redirected test file to /tmp/]');
+  }
+
+  // 4. Secret detection
+  if (/(password|secret|token|api[-_]?key|auth)/i.test(command) && !/#\s*SECRETS_OK/.test(command)) {
+    notes.push('[Security: Command contains sensitive keywords. Add "# SECRETS_OK" to bypass]');
+  }
+
+  // Output modified JSON
+  const output = {
+    ...toolInput,
+    tool_input: {
+      ...toolInput.tool_input,
+      command: modifiedCommand,
+    },
+  };
+
+  if (notes.length > 0) {
+    output.modification_notes = notes.join(' ');
+  }
+
+  console.log(JSON.stringify(output, null, 2));
+}
+
+async function modifyFileCommand(subArgs, flags) {
+  // Read JSON from stdin with timeout to detect if data is piped
+  let input = '';
+  let hasInput = false;
+
+  const timeout = setTimeout(() => {
+    if (!hasInput) {
+      console.log('Usage: echo \'{"tool_input":{"file_path":"your/file.js"}}\' | claude-flow hooks modify-file');
+      console.log('\nThis hook reads JSON from stdin and outputs modified JSON.');
+      console.log('It is designed for use with Claude Code v2.0.10+ PreToolUse feature.');
+      console.log('\nExample:');
+      console.log('  echo \'{"tool_input":{"file_path":"test.js"}}\' | claude-flow hooks modify-file');
+      process.exit(0);
+    }
+  }, 100); // 100ms timeout
+
+  for await (const chunk of process.stdin) {
+    hasInput = true;
+    clearTimeout(timeout);
+    input += chunk;
+  }
+
+  if (!input.trim()) {
+    return; // Silently exit if no input
+  }
+
+  const toolInput = JSON.parse(input);
+  const filePath = toolInput.tool_input?.file_path || toolInput.tool_input?.path || '';
+
+  if (!filePath) {
+    console.log(input); // Pass through if no file path
+    return;
+  }
+
+  let modifiedPath = filePath;
+  let shouldModify = false;
+  const notes = [];
+
+  // 1. Root folder protection
+  const isRootFile = /^[^/]*\.(js|ts|jsx|tsx|py|java|go|rs|cpp|c|h)$/.test(filePath) ||
+                     /^test.*\.(txt|log|tmp|json|md)$/.test(filePath) ||
+                     /^(temp|tmp|working)/.test(filePath);
+
+  if (isRootFile) {
+    if (/test.*\.(test|spec)\.|\.test\.|\.spec\./.test(filePath)) {
+      modifiedPath = `tests/${filePath}`;
+      shouldModify = true;
+      notes.push('[Organization: Moved test file to /tests/]');
+    } else if (/test.*\.md|temp.*\.md|working.*\.md|scratch.*\.md/.test(filePath)) {
+      modifiedPath = `docs/working/${filePath}`;
+      shouldModify = true;
+      notes.push('[Organization: Moved working document to /docs/working/]');
+    } else if (/\.(js|ts|jsx|tsx|py)$/.test(filePath)) {
+      modifiedPath = `src/${filePath}`;
+      shouldModify = true;
+      notes.push('[Organization: Moved source file to /src/]');
+    } else if (/^(temp|tmp|scratch)/.test(filePath)) {
+      modifiedPath = `/tmp/${filePath}`;
+      shouldModify = true;
+      notes.push('[Organization: Redirected temporary file to /tmp/]');
+    }
+  }
+
+  // 2. Format hints
+  if (/\.(ts|tsx|js|jsx)$/.test(modifiedPath)) {
+    notes.push('[Tip: Auto-format with Prettier/ESLint recommended]');
+  } else if (/\.py$/.test(modifiedPath)) {
+    notes.push('[Tip: Auto-format with Black/autopep8 recommended]');
+  }
+
+  // Output modified JSON
+  const output = {
+    ...toolInput,
+    tool_input: {
+      ...toolInput.tool_input,
+    },
+  };
+
+  if (shouldModify) {
+    if (toolInput.tool_input.file_path) {
+      output.tool_input.file_path = modifiedPath;
+    } else {
+      output.tool_input.path = modifiedPath;
+    }
+  }
+
+  if (notes.length > 0) {
+    output.modification_notes = notes.join(' ');
+  }
+
+  console.log(JSON.stringify(output, null, 2));
+}
+
+async function modifyGitCommitCommand(subArgs, flags) {
+  // Read JSON from stdin with timeout to detect if data is piped
+  let input = '';
+  let hasInput = false;
+
+  const timeout = setTimeout(() => {
+    if (!hasInput) {
+      console.log('Usage: echo \'{"tool_input":{"command":"git commit -m \\"message\\""}}\'  | claude-flow hooks modify-git-commit');
+      console.log('\nThis hook reads JSON from stdin and outputs modified JSON.');
+      console.log('It is designed for use with Claude Code v2.0.10+ PreToolUse feature.');
+      console.log('\nExample:');
+      console.log('  echo \'{"tool_input":{"command":"git commit -m \\"fix bug\\""}}\'  | claude-flow hooks modify-git-commit');
+      process.exit(0);
+    }
+  }, 100); // 100ms timeout
+
+  for await (const chunk of process.stdin) {
+    hasInput = true;
+    clearTimeout(timeout);
+    input += chunk;
+  }
+
+  if (!input.trim()) {
+    return; // Silently exit if no input
+  }
+
+  const toolInput = JSON.parse(input);
+  const command = toolInput.tool_input?.command || '';
+
+  if (!command || !/git commit/.test(command)) {
+    console.log(input); // Pass through if not git commit
+    return;
+  }
+
+  // Extract commit message
+  const msgMatch = command.match(/-m\s+["']([^"']+)["']/) || command.match(/-m\s+(\S+)/);
+  const commitMsg = msgMatch ? msgMatch[1] : '';
+
+  if (!commitMsg || /^\[(feat|fix|docs|style|refactor|test|chore|perf)\]/.test(commitMsg)) {
+    console.log(input); // Already formatted or no message
+    return;
+  }
+
+  const notes = [];
+
+  // Get current branch
+  let branch = 'main';
+  let ticket = '';
+  try {
+    const { execSync } = await import('child_process');
+    branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+
+    // Extract JIRA ticket
+    const ticketMatch = branch.match(/[A-Z]+-[0-9]+/);
+    if (ticketMatch) {
+      ticket = ticketMatch[0];
+    }
+  } catch {
+    // Git not available, continue
+  }
+
+  // Detect conventional commit type
+  let type = 'chore';
+  if (/^(add|implement|create|new)/i.test(commitMsg)) type = 'feat';
+  else if (/^(fix|resolve|patch|correct)/i.test(commitMsg)) type = 'fix';
+  else if (/^(update|modify|change|improve)/i.test(commitMsg)) type = 'refactor';
+  else if (/^(doc|documentation|readme)/i.test(commitMsg)) type = 'docs';
+  else if (/^(test|testing|spec)/i.test(commitMsg)) type = 'test';
+  else if (/^(style|format|lint)/i.test(commitMsg)) type = 'style';
+  else if (/^(perf|optimize|speed)/i.test(commitMsg)) type = 'perf';
+
+  // Format message
+  let formattedMsg = ticket
+    ? `[${type}] ${commitMsg} (${ticket})`
+    : `[${type}] ${commitMsg}`;
+
+  // Add co-author
+  if (!/Co-Authored-By/.test(command)) {
+    formattedMsg += `\n\n🤖 Generated with Claude Flow\nCo-Authored-By: claude-flow <noreply@ruv.io>`;
+  }
+
+  // Replace message in command
+  const modifiedCommand = command.replace(
+    /-m\s+["'][^"']+["']|-m\s+\S+/,
+    `-m "$(cat <<'EOF'\n${formattedMsg}\nEOF\n)"`
+  );
+
+  notes.push(`[Auto-formatted: ${type} type${ticket ? ` + ${ticket}` : ''}]`);
+
+  // Output modified JSON
+  const output = {
+    ...toolInput,
+    tool_input: {
+      ...toolInput.tool_input,
+      command: modifiedCommand,
+    },
+    modification_notes: notes.join(' '),
+  };
+
+  console.log(JSON.stringify(output, null, 2));
+}
+
 function showHooksHelp() {
   console.log('Claude Flow Hooks (with .swarm/memory.db persistence):\n');
 
@@ -1194,6 +1481,23 @@ function showHooksHelp() {
   console.log('  session-restore    Load previous session state');
   console.log('  notify             Custom notifications');
 
+  console.log('\n===== NEW: PreToolUse Modification Hooks (v2.0.10+) =====');
+  console.log('  modify-bash        Modify Bash tool inputs (reads/writes JSON via stdin/stdout)');
+  console.log('                     • Safety: Adds -i flag to rm commands');
+  console.log('                     • Aliases: ll → ls -lah, la → ls -la');
+  console.log('                     • Path correction: Redirects test files to /tmp');
+  console.log('                     • Secret detection: Warns about sensitive keywords');
+  console.log('');
+  console.log('  modify-file        Modify Write/Edit tool inputs (reads/writes JSON via stdin/stdout)');
+  console.log('                     • Root folder protection: Moves files to appropriate directories');
+  console.log('                     • Organization: Tests → /tests/, Sources → /src/, Docs → /docs/');
+  console.log('                     • Format hints: Suggests Prettier, Black, etc.');
+  console.log('');
+  console.log('  modify-git-commit  Modify git commit messages (reads/writes JSON via stdin/stdout)');
+  console.log('                     • Conventional commits: Auto-adds [feat], [fix], [docs], etc.');
+  console.log('                     • Ticket extraction: Extracts JIRA tickets from branch names');
+  console.log('                     • Co-author: Adds Claude Flow co-author footer');
+
   console.log('\nExamples:');
   console.log('  hooks pre-command --command "npm test" --validate-safety true');
   console.log('  hooks pre-edit --file "src/app.js" --auto-assign-agents true');
@@ -1202,12 +1506,18 @@ function showHooksHelp() {
   console.log('  hooks session-end --generate-summary true --export-metrics true');
   console.log('  hooks agent-spawned --name "CodeReviewer" --type "reviewer"');
   console.log('  hooks notify --message "Build completed" --level "success"');
+  console.log('');
+  console.log('  # New modification hooks (stdin/stdout JSON):');
+  console.log('  echo \'{"tool_input":{"command":"rm test.txt"}}\' | hooks modify-bash');
+  console.log('  echo \'{"tool_input":{"file_path":"test.js"}}\' | hooks modify-file');
+  console.log('  echo \'{"tool_input":{"command":"git commit -m \\"fix bug\\""}}\' | hooks modify-git-commit');
 
   console.log('\nCompatibility:');
   console.log('  • pre-command and pre-bash are aliases');
   console.log('  • post-command and post-bash are aliases');
   console.log('  • Both --dash-case and camelCase parameters supported');
   console.log('  • All parameters from settings.json template supported');
+  console.log('  • New modification hooks work with Claude Code v2.0.10+ PreToolUse feature');
 }
 
 export default hooksAction;

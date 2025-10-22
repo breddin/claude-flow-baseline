@@ -1,7 +1,7 @@
 #!/bin/sh
 # Claude-Flow Smart Dispatcher - Detects and uses the best available runtime
 
-VERSION="2.5.0-alpha.131"
+VERSION="2.7.0-alpha.12"
 
 # Determine the correct path based on how the script is invoked
 if [ -L "$0" ]; then
@@ -48,16 +48,16 @@ for arg in "$@"; do
   fi
 done
 
-# Use Node.js with TypeScript support
+# Use Node.js with TypeScript support and WASM modules enabled
 if [ -f "$ROOT_DIR/src/cli/simple-cli.js" ]; then
-  # Use node for JavaScript version
-  exec node "$ROOT_DIR/src/cli/simple-cli.js" "$@"
+  # Use node for JavaScript version with WASM support
+  exec node --experimental-wasm-modules "$ROOT_DIR/src/cli/simple-cli.js" "$@"
 elif command -v tsx >/dev/null 2>&1 && [ -f "$ROOT_DIR/src/cli/simple-cli.ts" ]; then
-  # Use tsx for TypeScript functionality
-  exec tsx "$ROOT_DIR/src/cli/simple-cli.ts" "$@"
+  # Use tsx for TypeScript functionality with WASM support
+  exec tsx --experimental-wasm-modules "$ROOT_DIR/src/cli/simple-cli.ts" "$@"
 elif [ -f "$ROOT_DIR/src/cli/simple-cli.ts" ]; then
-  # Try to use npx tsx as fallback
-  exec npx tsx "$ROOT_DIR/src/cli/simple-cli.ts" "$@"
+  # Try to use npx tsx as fallback with WASM support
+  exec npx tsx --experimental-wasm-modules "$ROOT_DIR/src/cli/simple-cli.ts" "$@"
 else
   # No runtime available, show help
   echo "🧠 Claude-Flow v$VERSION - Advanced AI Agent Orchestration System"

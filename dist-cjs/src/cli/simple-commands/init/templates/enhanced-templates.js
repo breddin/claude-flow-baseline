@@ -2247,32 +2247,29 @@ function createEnhancedSettingsJsonFallback() {
         },
         permissions: {
             allow: [
-                'Bash(npx claude-flow *)',
+                'Bash(npx claude-flow:*)',
                 'Bash(npm run lint)',
                 'Bash(npm run test:*)',
-                'Bash(npm test *)',
+                'Bash(npm test:*)',
                 'Bash(git status)',
-                'Bash(git diff *)',
-                'Bash(git log *)',
-                'Bash(git add *)',
-                'Bash(git commit *)',
+                'Bash(git diff:*)',
+                'Bash(git log:*)',
+                'Bash(git add:*)',
+                'Bash(git commit:*)',
                 'Bash(git push)',
-                'Bash(git config *)',
-                'Bash(git tag *)',
-                'Bash(git branch *)',
-                'Bash(git checkout *)',
-                'Bash(git stash *)',
-                'Bash(node *)',
-                'Bash(which *)',
+                'Bash(git config:*)',
+                'Bash(git tag:*)',
+                'Bash(git branch:*)',
+                'Bash(git checkout:*)',
+                'Bash(git stash:*)',
+                'Bash(node:*)',
+                'Bash(which:*)',
                 'Bash(pwd)',
-                'Bash(ls *)',
-                'Bash(jq *)'
+                'Bash(ls:*)',
+                'Bash(jq:*)'
             ],
             deny: [
-                'Bash(rm -rf /)',
-                'Bash(curl * | bash)',
-                'Bash(wget * | sh)',
-                'Bash(eval *)'
+                'Bash(rm -rf /)'
             ]
         },
         enabledMcpjsonServers: [
@@ -2353,7 +2350,11 @@ function createEnhancedSettingsJsonFallback() {
                 }
             ]
         },
-        includeCoAuthoredBy: true
+        includeCoAuthoredBy: true,
+        statusLine: {
+            type: 'command',
+            command: '.claude/statusline-command.sh'
+        }
     }, null, 2);
 }
 
