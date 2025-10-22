@@ -95,6 +95,19 @@ export async function copyTemplates(targetDir, options = {}) {
         if (await copyFile(settingsPath, settingsDest, options)) {
           results.copiedFiles.push('.claude/settings.json');
         }
+
+        // Copy statusline script
+        const statuslineSource = join(templatesDir, 'statusline-command.sh');
+        const statuslineDest = join(claudeDir, 'statusline-command.sh');
+        if (existsSync(statuslineSource)) {
+          if (await copyFile(statuslineSource, statuslineDest, options)) {
+            // Make executable
+            if (!options.dryRun) {
+              await fs.chmod(statuslineDest, 0o755);
+            }
+            results.copiedFiles.push('.claude/statusline-command.sh');
+          }
+        }
       } else if (!options.dryRun) {
         // Still create the directory even if skipping settings
         await fs.mkdir(claudeDir, { recursive: true });

@@ -2,6 +2,7 @@
 import { printSuccess, printError, printWarning, exit } from '../../utils.js';
 import { existsSync } from 'fs';
 import process from 'process';
+import os from 'os';
 import { spawn, execSync } from 'child_process';
 import { promisify } from 'util';
 
@@ -42,6 +43,7 @@ import { promises as fs } from 'fs';
 import { copyTemplates } from './template-copier.js';
 import { copyRevisedTemplates, validateTemplatesExist } from './copy-revised-templates.js';
 import { copyAgentFiles, createAgentDirectories, validateAgentSystem, copyCommandFiles } from './agent-copier.js';
+import { copySkillFiles, createSkillDirectories, validateSkillSystem } from './skills-copier.js';
 import { showInitHelp } from './help.js';
 import { batchInitCommand, batchInitFromConfig, validateBatchOptions } from './batch-init.js';
 import { ValidationSystem, runFullValidation } from './validation/index.js';
@@ -149,6 +151,189 @@ async function setupMcpServers(dryRun = false) {
   }
 }
 
+/**
+ * Create statusline script content (embedded fallback for binary builds)
+ */
+function createStatuslineScript() {
+  return `
+#!/bin/bash
+
+# Read JSON input from stdin
+INPUT=$(cat)
+MODEL=$(echo "$INPUT" | jq -r \'.model.display_name // "Claude"\')
+CWD=$(echo "$INPUT" | jq -r \'.workspace.current_dir // .cwd\')
+DIR=$(basename "$CWD")
+
+# Replace claude-code-flow with branded name
+if [ "$DIR" = "claude-code-flow" ]; then
+  DIR="🌊 Claude Flow"
+fi
+
+# Get git branch
+BRANCH=$(cd "$CWD" 2>/dev/null && git branch --show-current 2>/dev/null)
+
+# Start building statusline
+printf "\\033[1m$MODEL\\033[0m in \\033[36m$DIR\\033[0m"
+[ -n "$BRANCH" ] && printf " on \\033[33m⎇ $BRANCH\\033[0m"
+
+# Claude-Flow integration
+FLOW_DIR="$CWD/.claude-flow"
+
+if [ -d "$FLOW_DIR" ]; then
+  printf " │"
+
+  # 1. Swarm Configuration & Topology
+  if [ -f "$FLOW_DIR/swarm-config.json" ]; then
+    STRATEGY=$(jq -r \'.defaultStrategy // empty\' "$FLOW_DIR/swarm-config.json" 2>/dev/null)
+    if [ -n "$STRATEGY" ]; then
+      # Map strategy to topology icon
+      case "$STRATEGY" in
+        "balanced") TOPO_ICON="⚡mesh" ;;
+        "conservative") TOPO_ICON="⚡hier" ;;
+        "aggressive") TOPO_ICON="⚡ring" ;;
+        *) TOPO_ICON="⚡$STRATEGY" ;;
+      esac
+      printf " \\033[35m$TOPO_ICON\\033[0m"
+
+      # Count agent profiles as "configured agents"
+      AGENT_COUNT=$(jq -r \'.agentProfiles | length\' "$FLOW_DIR/swarm-config.json" 2>/dev/null)
+      if [ -n "$AGENT_COUNT" ] && [ "$AGENT_COUNT" != "null" ] && [ "$AGENT_COUNT" -gt 0 ]; then
+        printf "  \\033[35m🤖 $AGENT_COUNT\\033[0m"
+      fi
+    fi
+  fi
+
+  # 2. Real-time System Metrics
+  if [ -f "$FLOW_DIR/metrics/system-metrics.json" ]; then
+    # Get latest metrics (last entry in array)
+    LATEST=$(jq -r \'.[-1]\' "$FLOW_DIR/metrics/system-metrics.json" 2>/dev/null)
+
+    if [ -n "$LATEST" ] && [ "$LATEST" != "null" ]; then
+      # Memory usage
+      MEM_PERCENT=$(echo "$LATEST" | jq -r \'.memoryUsagePercent // 0\' | awk \'{printf "%.0f", $1}\')
+      if [ -n "$MEM_PERCENT" ] && [ "$MEM_PERCENT" != "null" ]; then
+        # Color-coded memory (green <60%, yellow 60-80%, red >80%)
+        if [ "$MEM_PERCENT" -lt 60 ]; then
+          MEM_COLOR="\\033[32m"  # Green
+        elif [ "$MEM_PERCENT" -lt 80 ]; then
+          MEM_COLOR="\\033[33m"  # Yellow
+        else
+          MEM_COLOR="\\033[31m"  # Red
+        fi
+        printf "  \${MEM_COLOR}💾 \${MEM_PERCENT}%\\033[0m"
+      fi
+
+      # CPU load
+      CPU_LOAD=$(echo "$LATEST" | jq -r \'.cpuLoad // 0\' | awk \'{printf "%.0f", $1 * 100}\')
+      if [ -n "$CPU_LOAD" ] && [ "$CPU_LOAD" != "null" ]; then
+        # Color-coded CPU (green <50%, yellow 50-75%, red >75%)
+        if [ "$CPU_LOAD" -lt 50 ]; then
+          CPU_COLOR="\\033[32m"  # Green
+        elif [ "$CPU_LOAD" -lt 75 ]; then
+          CPU_COLOR="\\033[33m"  # Yellow
+        else
+          CPU_COLOR="\\033[31m"  # Red
+        fi
+        printf "  \${CPU_COLOR}⚙ \${CPU_LOAD}%\\033[0m"
+      fi
+    fi
+  fi
+
+  # 3. Session State
+  if [ -f "$FLOW_DIR/session-state.json" ]; then
+    SESSION_ID=$(jq -r \'.sessionId // empty\' "$FLOW_DIR/session-state.json" 2>/dev/null)
+    ACTIVE=$(jq -r \'.active // false\' "$FLOW_DIR/session-state.json" 2>/dev/null)
+
+    if [ "$ACTIVE" = "true" ] && [ -n "$SESSION_ID" ]; then
+      # Show abbreviated session ID
+      SHORT_ID=$(echo "$SESSION_ID" | cut -d\'-\' -f1)
+      printf "  \\033[34m🔄 $SHORT_ID\\033[0m"
+    fi
+  fi
+
+  # 4. Performance Metrics from task-metrics.json
+  if [ -f "$FLOW_DIR/metrics/task-metrics.json" ]; then
+    # Parse task metrics for success rate, avg time, and streak
+    METRICS=$(jq -r \'
+      # Calculate metrics
+      (map(select(.success == true)) | length) as $successful |
+      (length) as $total |
+      (if $total > 0 then ($successful / $total * 100) else 0 end) as $success_rate |
+      (map(.duration // 0) | add / length) as $avg_duration |
+      # Calculate streak (consecutive successes from end)
+      (reverse |
+        reduce .[] as $task (0;
+          if $task.success == true then . + 1 else 0 end
+        )
+      ) as $streak |
+      {
+        success_rate: $success_rate,
+        avg_duration: $avg_duration,
+        streak: $streak,
+        total: $total
+      } | @json
+    \' "$FLOW_DIR/metrics/task-metrics.json" 2>/dev/null)
+
+    if [ -n "$METRICS" ] && [ "$METRICS" != "null" ]; then
+      # Success Rate
+      SUCCESS_RATE=$(echo "$METRICS" | jq -r \'.success_rate // 0\' | awk \'{printf "%.0f", $1}\')
+      TOTAL_TASKS=$(echo "$METRICS" | jq -r \'.total // 0\')
+
+      if [ -n "$SUCCESS_RATE" ] && [ "$TOTAL_TASKS" -gt 0 ]; then
+        # Color-code: Green (>80%), Yellow (60-80%), Red (<60%)
+        if [ "$SUCCESS_RATE" -gt 80 ]; then
+          SUCCESS_COLOR="\\033[32m"  # Green
+        elif [ "$SUCCESS_RATE" -ge 60 ]; then
+          SUCCESS_COLOR="\\033[33m"  # Yellow
+        else
+          SUCCESS_COLOR="\\033[31m"  # Red
+        fi
+        printf "  \${SUCCESS_COLOR}🎯 \${SUCCESS_RATE}%\\033[0m"
+      fi
+
+      # Average Time
+      AVG_TIME=$(echo "$METRICS" | jq -r \'.avg_duration // 0\')
+      if [ -n "$AVG_TIME" ] && [ "$TOTAL_TASKS" -gt 0 ]; then
+        # Format smartly: seconds, minutes, or hours
+        if [ $(echo "$AVG_TIME < 60" | bc -l 2>/dev/null || echo 0) -eq 1 ]; then
+          TIME_STR=$(echo "$AVG_TIME" | awk \'{printf "%.1fs", $1}\')
+        elif [ $(echo "$AVG_TIME < 3600" | bc -l 2>/dev/null || echo 0) -eq 1 ]; then
+          TIME_STR=$(echo "$AVG_TIME" | awk \'{printf "%.1fm", $1/60}\')
+        else
+          TIME_STR=$(echo "$AVG_TIME" | awk \'{printf "%.1fh", $1/3600}\')
+        fi
+        printf "  \\033[36m⏱️  $TIME_STR\\033[0m"
+      fi
+
+      # Streak (only show if > 0)
+      STREAK=$(echo "$METRICS" | jq -r \'.streak // 0\')
+      if [ -n "$STREAK" ] && [ "$STREAK" -gt 0 ]; then
+        printf "  \\033[91m🔥 $STREAK\\033[0m"
+      fi
+    fi
+  fi
+
+  # 5. Active Tasks (check for task files)
+  if [ -d "$FLOW_DIR/tasks" ]; then
+    TASK_COUNT=$(find "$FLOW_DIR/tasks" -name "*.json" -type f 2>/dev/null | wc -l)
+    if [ "$TASK_COUNT" -gt 0 ]; then
+      printf "  \\033[36m📋 $TASK_COUNT\\033[0m"
+    fi
+  fi
+
+  # 6. Check for hooks activity
+  if [ -f "$FLOW_DIR/hooks-state.json" ]; then
+    HOOKS_ACTIVE=$(jq -r \'.enabled // false\' "$FLOW_DIR/hooks-state.json" 2>/dev/null)
+    if [ "$HOOKS_ACTIVE" = "true" ]; then
+      printf " \\033[35m🔗\\033[0m"
+    fi
+  fi
+fi
+
+echo
+`;
+}
+
 export async function initCommand(subArgs, flags) {
   // Show help if requested
   if (flags.help || flags.h || subArgs.includes('--help') || subArgs.includes('-h')) {
@@ -156,10 +341,34 @@ export async function initCommand(subArgs, flags) {
     return;
   }
 
+  // Handle --env flag for .env template generation
+  if (flags.env || subArgs.includes('--env')) {
+    const { generateEnvTemplate } = await import('../env-template.js');
+    const workingDir = process.env.PWD || process.cwd();
+    const force = flags.force || flags.f;
+
+    console.log('📋 Generating .env template file...\n');
+    const result = await generateEnvTemplate(workingDir, force);
+
+    if (result.created) {
+      console.log('\n📚 Next steps:');
+      console.log('1. Open .env file and add your API keys');
+      console.log('2. Get keys from:');
+      console.log('   • Anthropic: https://console.anthropic.com/settings/keys');
+      console.log('   • OpenRouter: https://openrouter.ai/keys');
+      console.log('3. Enable memory: claude-flow agent run coder "task" --enable-memory\n');
+      console.log('💡 See docs/REASONINGBANK-COST-OPTIMIZATION.md for cost savings tips');
+    } else if (result.exists) {
+      console.log('💡 To overwrite: claude-flow init --env --force');
+    }
+
+    return;
+  }
+
   // Check for verification flags first
-  const hasVerificationFlags = subArgs.includes('--verify') || subArgs.includes('--pair') || 
+  const hasVerificationFlags = subArgs.includes('--verify') || subArgs.includes('--pair') ||
                                flags.verify || flags.pair;
-  
+
   // Handle Flow Nexus minimal init
   if (flags['flow-nexus']) {
     return await flowNexusMinimalInit(flags, subArgs);
@@ -1115,13 +1324,19 @@ async function enhancedClaudeFlowInit(flags, subArgs = []) {
   const dryRun = flags.dryRun || flags['dry-run'] || flags.d;
   const initSparc = flags.roo || (subArgs && subArgs.includes('--roo')); // SPARC only with --roo flag
 
+  // Parse --agent flag for specialized agent setup
+  const agentType = flags.agent || (subArgs && subArgs.find(arg => arg.startsWith('--agent='))?.split('=')[1]);
+  const initReasoning = agentType === 'reasoning' || (subArgs && subArgs.includes('--agent') && subArgs.includes('reasoning'));
+
   // Store parameters to avoid scope issues in async context
   const args = subArgs || [];
   const options = flags || {};
 
-  // Import fs module for Node.js
+  // Import fs, path, and os modules for Node.js
   const fs = await import('fs/promises');
   const { chmod } = fs;
+  const path = await import('path');
+  const os = await import('os');
 
   try {
     // Check existing files
@@ -1170,6 +1385,43 @@ async function enhancedClaudeFlowInit(flags, subArgs = []) {
       printSuccess('✓ Created .claude/settings.json with hooks and MCP configuration');
     } else {
       console.log('[DRY RUN] Would create .claude/settings.json');
+    }
+
+    // Copy statusline script
+    try {
+      let statuslineTemplate;
+      try {
+        // Try to read from templates directory first
+        statuslineTemplate = await fs.readFile(
+          path.join(__dirname, 'templates', 'statusline-command.sh'),
+          'utf8'
+        );
+      } catch {
+        // Fallback to embedded content (for binary builds)
+        statuslineTemplate = createStatuslineScript();
+      }
+
+      if (!dryRun) {
+        // Write to project .claude directory
+        await fs.writeFile(`${claudeDir}/statusline-command.sh`, statuslineTemplate, 'utf8');
+        await fs.chmod(`${claudeDir}/statusline-command.sh`, 0o755);
+
+        // Also write to home ~/.claude directory for global use
+        const homeClaudeDir = path.join(os.homedir(), '.claude');
+        await fs.mkdir(homeClaudeDir, { recursive: true });
+        await fs.writeFile(path.join(homeClaudeDir, 'statusline-command.sh'), statuslineTemplate, 'utf8');
+        await fs.chmod(path.join(homeClaudeDir, 'statusline-command.sh'), 0o755);
+
+        printSuccess('✓ Created statusline-command.sh in both .claude/ and ~/.claude/');
+      } else {
+        console.log('[DRY RUN] Would create .claude/statusline-command.sh and ~/.claude/statusline-command.sh');
+      }
+    } catch (err) {
+      // Not critical, just skip
+      if (!dryRun) {
+        console.log('  ⚠️  Could not create statusline script, skipping...');
+        console.log(`  ℹ️  Error: ${err.message}`);
+      }
     }
 
     // Create settings.local.json with default MCP permissions
@@ -1320,6 +1572,57 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
 
       // Initialize memory database with fallback support
       try {
+        // Check if database exists BEFORE creating it
+        const dbPath = '.swarm/memory.db';
+        const { existsSync } = await import('fs');
+        const dbExistedBefore = existsSync(dbPath);
+
+        // Handle ReasoningBank migration BEFORE FallbackMemoryStore initialization
+        // This prevents schema conflicts with old databases
+        if (dbExistedBefore) {
+          console.log('  🔍 Checking existing database for ReasoningBank schema...');
+
+          try {
+            const {
+              initializeReasoningBank,
+              checkReasoningBankTables,
+              migrateReasoningBank
+            } = await import('../../../reasoningbank/reasoningbank-adapter.js');
+
+            // Set the database path for ReasoningBank
+            process.env.CLAUDE_FLOW_DB_PATH = dbPath;
+
+            const tableCheck = await checkReasoningBankTables();
+
+            if (tableCheck.exists) {
+              console.log('  ✅ ReasoningBank schema already complete');
+            } else if (force) {
+              // User used --force flag, migrate the database
+              console.log(`  🔄 Migrating database: ${tableCheck.missingTables.length} tables missing`);
+              console.log(`     Missing: ${tableCheck.missingTables.join(', ')}`);
+
+              const migrationResult = await migrateReasoningBank();
+
+              if (migrationResult.success) {
+                printSuccess(`  ✓ Migration complete: added ${migrationResult.addedTables?.length || 0} tables`);
+                console.log('     Use --reasoningbank flag to enable AI-powered memory features');
+              } else {
+                console.log(`  ⚠️  Migration failed: ${migrationResult.message}`);
+                console.log('     Basic memory will work, use: memory init --reasoningbank to retry');
+              }
+            } else {
+              // Database exists with missing tables but no --force flag
+              console.log(`  ℹ️  Database has ${tableCheck.missingTables.length} missing ReasoningBank tables`);
+              console.log(`     Missing: ${tableCheck.missingTables.join(', ')}`);
+              console.log('     Use --force to migrate existing database');
+              console.log('     Or use: memory init --reasoningbank');
+            }
+          } catch (rbErr) {
+            console.log(`  ⚠️  ReasoningBank check failed: ${rbErr.message}`);
+            console.log('     Will attempt normal initialization...');
+          }
+        }
+
         // Import and initialize FallbackMemoryStore to create the database
         const { FallbackMemoryStore } = await import('../../../memory/fallback-store.js');
         const memoryStore = new FallbackMemoryStore();
@@ -1332,6 +1635,25 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
           );
         } else {
           printSuccess('✓ Initialized memory database (.swarm/memory.db)');
+
+          // Initialize ReasoningBank schema for fresh databases
+          if (!dbExistedBefore) {
+            try {
+              const {
+                initializeReasoningBank
+              } = await import('../../../reasoningbank/reasoningbank-adapter.js');
+
+              // Set the database path for ReasoningBank
+              process.env.CLAUDE_FLOW_DB_PATH = dbPath;
+
+              console.log('  🧠 Initializing ReasoningBank schema...');
+              await initializeReasoningBank();
+              printSuccess('  ✓ ReasoningBank schema initialized (use --reasoningbank flag for AI-powered memory)');
+            } catch (rbErr) {
+              console.log(`  ⚠️  ReasoningBank initialization failed: ${rbErr.message}`);
+              console.log('     Basic memory will work, use: memory init --reasoningbank to retry');
+            }
+          }
         }
 
         memoryStore.close();
@@ -1448,29 +1770,93 @@ ${commands.map((cmd) => `- [${cmd}](./${cmd}.md)`).join('\n')}
         force: force,
         dryRun: dryRun
       });
-      
+
       if (agentResult.success) {
         await validateAgentSystem(workingDir);
-        
+
         // Copy command files including Flow Nexus commands
         console.log('\n📚 Setting up command system...');
         const commandResult = await copyCommandFiles(workingDir, {
           force: force,
           dryRun: dryRun
         });
-        
+
         if (commandResult.success) {
           console.log('✅ ✓ Command system setup complete with Flow Nexus integration');
         } else {
           console.log('⚠️  Command system setup failed:', commandResult.error);
         }
-        
+
+        // Copy skill files including skill-builder
+        console.log('\n🎯 Setting up skill system...');
+        const skillResult = await copySkillFiles(workingDir, {
+          force: force,
+          dryRun: dryRun
+        });
+
+        if (skillResult.success) {
+          await validateSkillSystem(workingDir);
+          console.log('✅ ✓ Skill system setup complete with skill-builder');
+        } else {
+          console.log('⚠️  Skill system setup failed:', skillResult.error);
+        }
+
         console.log('✅ ✓ Agent system setup complete with 64 specialized agents');
       } else {
         console.log('⚠️  Agent system setup failed:', agentResult.error);
       }
+
+      // Setup reasoning agents if --agent reasoning flag is used
+      if (initReasoning) {
+        console.log('\n🧠 Setting up reasoning agents with ReasoningBank integration...');
+        try {
+          const reasoningAgentsDir = `${workingDir}/.claude/agents/reasoning`;
+          await fs.mkdir(reasoningAgentsDir, { recursive: true });
+
+          // Import path module
+          const path = await import('path');
+          const { fileURLToPath } = await import('url');
+          const { dirname, join } = path.default;
+
+          // Get the source reasoning agents directory
+          const __filename = fileURLToPath(import.meta.url);
+          const __dirname = dirname(__filename);
+          const sourceReasoningDir = join(__dirname, '../../../../.claude/agents/reasoning');
+
+          // Copy reasoning agent files
+          try {
+            const reasoningFiles = await fs.readdir(sourceReasoningDir);
+            let copiedReasoningAgents = 0;
+
+            for (const file of reasoningFiles) {
+              if (file.endsWith('.md')) {
+                const sourcePath = join(sourceReasoningDir, file);
+                const destPath = join(reasoningAgentsDir, file);
+                const content = await fs.readFile(sourcePath, 'utf8');
+                await fs.writeFile(destPath, content);
+                copiedReasoningAgents++;
+              }
+            }
+
+            printSuccess(`✓ Copied ${copiedReasoningAgents} reasoning agent files`);
+            console.log('  📚 Reasoning agents available:');
+            console.log('    • goal-planner - Goal-Oriented Action Planning specialist');
+            console.log('    • sublinear-goal-planner - Sub-linear complexity goal planning');
+            console.log('  💡 Use: npx agentic-flow --agent goal-planner --task "your task"');
+            console.log('  📖 Documentation: .claude/agents/reasoning/README.md');
+          } catch (err) {
+            console.log(`  ⚠️  Could not copy reasoning agents: ${err.message}`);
+            console.log('     Reasoning agents may not be available yet');
+          }
+        } catch (err) {
+          console.log(`  ⚠️  Reasoning agent setup failed: ${err.message}`);
+        }
+      }
     } else {
       console.log('  [DRY RUN] Would create agent system with 64 specialized agents');
+      if (initReasoning) {
+        console.log('  [DRY RUN] Would also setup reasoning agents with ReasoningBank integration');
+      }
     }
 
     // Optional: Setup monitoring and telemetry

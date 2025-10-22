@@ -56,6 +56,16 @@ export async function copyTemplates(targetDir, options = {}) {
                 if (await copyFile(settingsPath, settingsDest, options)) {
                     results.copiedFiles.push('.claude/settings.json');
                 }
+                const statuslineSource = join(templatesDir, 'statusline-command.sh');
+                const statuslineDest = join(claudeDir, 'statusline-command.sh');
+                if (existsSync(statuslineSource)) {
+                    if (await copyFile(statuslineSource, statuslineDest, options)) {
+                        if (!options.dryRun) {
+                            await fs.chmod(statuslineDest, 0o755);
+                        }
+                        results.copiedFiles.push('.claude/statusline-command.sh');
+                    }
+                }
             } else if (!options.dryRun) {
                 await fs.mkdir(claudeDir, {
                     recursive: true
